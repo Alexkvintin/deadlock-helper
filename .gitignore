@@ -1,0 +1,11 @@
+dist/
+artifacts/
+releases/
+*.user
+*.pdb
+obj/
+bin/
+assets/heroes-source.json
+tools/toolchain/
+tools/deadlock-rs/
+native-reader/target/

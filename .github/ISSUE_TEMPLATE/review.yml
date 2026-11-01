@@ -1,0 +1,22 @@
+name: Review / Отзыв
+description: Share your experience with Deadlock Helper. Обратная связь по желанию.
+title: "[Review] "
+labels: [feedback]
+body:
+  - type: markdown
+    attributes:
+      value: "Thank you for trying Deadlock Helper by kvintin. All fields are optional. English and Russian are welcome."
+  - type: textarea
+    id: experience
+    attributes:
+      label: Your experience / Ваши впечатления
+      description: What worked well? What felt inconvenient?
+  - type: input
+    id: version
+    attributes:
+      label: App version / Версия приложения
+      placeholder: v1.0
+  - type: textarea
+    id: anything_else
+    attributes:
+      label: Anything else / Что ещё хочется добавить

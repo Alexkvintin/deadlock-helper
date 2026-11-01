@@ -1,0 +1,20 @@
+name: Idea / Пожелание
+description: Suggest an improvement. Предложите улучшение.
+title: "[Idea] "
+labels: [idea]
+body:
+  - type: markdown
+    attributes:
+      value: "Ideas are welcome. Describe a change that would make the app more useful for you. English and Russian are welcome."
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea / Ваше пожелание
+  - type: textarea
+    id: benefit
+    attributes:
+      label: How would it help? / Чем это поможет?
+  - type: textarea
+    id: context
+    attributes:
+      label: Example or context / Пример или контекст

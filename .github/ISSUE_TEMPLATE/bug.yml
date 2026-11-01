@@ -1,0 +1,44 @@
+name: Bug report / Ошибка
+description: Tell us what did not work. Сообщите о проблеме.
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "Share only what you are comfortable sharing. English and Russian are welcome. Do not include passwords, account tokens or private information."
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened? / Что произошло?
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect? / Что ожидалось?
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce / Как повторить
+  - type: input
+    id: version
+    attributes:
+      label: App version / Версия приложения
+      placeholder: v1.0
+  - type: input
+    id: display
+    attributes:
+      label: Windows and display / Windows и монитор
+      placeholder: Windows 11, 1920×1080, 100%
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Match context / Режим
+      options:
+        - Playing my own match / Играю свой матч
+        - Spectating / Смотрю матч
+        - Manual match ID / Подключение по ID
+        - Settings / Настройки
+  - type: textarea
+    id: attachments
+    attributes:
+      label: Optional details / Дополнительные сведения
+      description: Screenshots or reviewed log excerpts may help, but are not required.

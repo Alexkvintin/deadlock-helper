@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300">
+<defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#172b2d"/><stop offset="1" stop-color="#090f14"/></linearGradient><linearGradient id="gold"><stop stop-color="#edd49b"/><stop offset="1" stop-color="#b99352"/></linearGradient></defs>
+<rect width="1200" height="300" rx="24" fill="url(#bg)"/>
+<path d="M30 74V30h72M1098 270h72v-44" fill="none" stroke="#8b7755" stroke-width="2"/>
+<circle cx="150" cy="150" r="64" fill="none" stroke="url(#gold)" stroke-width="2"/>
+<path d="M150 73l10 60 58 17-58 16-10 61-11-61-57-16 57-17z" fill="none" stroke="#dec18a" stroke-width="2"/>
+<circle cx="150" cy="150" r="12" fill="#6bd5ba"/>
+<text x="260" y="144" font-family="Georgia,serif" font-size="65" fill="url(#gold)" letter-spacing="2">DEADLOCK HELPER</text>
+<text x="264" y="193" font-family="Arial,sans-serif" font-size="22" fill="#8fdbc9" letter-spacing="6">BY KVINTIN</text>
+<path d="M264 218h778" stroke="#354c4d"/>
+</svg>
