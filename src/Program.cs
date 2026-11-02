@@ -89,7 +89,7 @@ namespace DeadlockOverlay {
             window.EndSessionRequested+=EndSession;
             left=new OverlayRenderer(true,images);right=new OverlayRenderer(false,images);widgets.Add(left);widgets.Add(right);
             hud=new HudOverlay(hudAdvice);widgets.Add(hud);for(int i=0;i<3;i++){mapWidgets[i]=new HudOverlay(hudAdvice,i+3);widgets.Add(mapWidgets[i]);}for(int i=0;i<6;i++)handles[i]=new LayoutHandle(i);
-            tray=new NotifyIcon { Text="Deadlock Helper by kvintin · v1.0",Icon=Design.AppIcon,Visible=true };
+            tray=new NotifyIcon { Text="Deadlock Helper by kvintin · v1.0.1",Icon=Design.AppIcon,Visible=true };
             var menu=new ContextMenuStrip(); menu.Items.Add(L.T("Настройки"),null,(s,e)=>Open());menu.Items.Add(L.T("Последняя сводка"),null,(s,e)=>{if(lastSummary!=null)new SummaryWindow(lastSummary).Show();else Process.Start("explorer.exe",SettingsManager.Folder);}); menu.Items.Add(L.T("Скрыть / показать"),null,(s,e)=>{hidden=!hidden;Refresh();});menu.Items.Add(L.T("Выход"),null,(s,e)=>Application.Exit());tray.ContextMenuStrip=menu;tray.DoubleClick+=(s,e)=>Open();
             hotkey.Toggle+=()=>{hidden=!hidden;Refresh();};hotkey.TogglePart+=part=>{settings.TogglePart(part);SettingsManager.Save(settings);window.SyncVisibility();Refresh();};Changed();
             menu.Items.Insert(1,new ToolStripMenuItem(L.Choose("Match viewer","Просмотр матча"),null,(s,e)=>ShowViewer(selectedMatch)));

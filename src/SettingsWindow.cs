@@ -35,7 +35,7 @@ namespace DeadlockOverlay {
         public SettingsWindow(Settings settings,Action changed,Action<bool> demo) {
             this.settings=settings; this.changed=changed; this.demo=demo;
             L.Language=settings.Language;
-            Text="Deadlock Helper by kvintin · v1.0"; Size=new Size(1320,880); MinimumSize=new Size(860,560); Icon=Design.AppIcon; StartPosition=FormStartPosition.CenterScreen;
+            Text="Deadlock Helper by kvintin · v1.0.1"; Size=new Size(1320,880); MinimumSize=new Size(860,560); Icon=Design.AppIcon; StartPosition=FormStartPosition.CenterScreen;
             SetStyle(ControlStyles.ResizeRedraw|ControlStyles.OptimizedDoubleBuffer,true);BackColor=Theme.Background; ForeColor=Theme.Ink; Font=new Font("Bahnschrift",11f);
             AutoScaleDimensions=new SizeF(96,96); AutoScaleMode=AutoScaleMode.Dpi;
             pageHost.Dock=DockStyle.Fill;pageHost.BackColor=Color.FromArgb(16,24,29);
@@ -90,7 +90,9 @@ namespace DeadlockOverlay {
             for(int i=0;i<6;i++){int part=i;Add(new Label{Text=LayoutHandle.Names[i],AutoSize=true});var bind=new ScrollSafeComboBox{DropDownStyle=ComboBoxStyle.DropDownList};bind.Items.Add(L.Choose("Not assigned","Не назначено"));for(int n=1;n<=12;n++)bind.Items.Add("Ctrl + Shift + F"+n);bind.SelectedIndex=settings.PartHotkeys[i]==0?0:settings.PartHotkeys[i]-111;bind.SelectedIndexChanged+=(a,b)=>{int key=bind.SelectedIndex==0?0:bind.SelectedIndex+111;bool duplicate=key!=0&&(key==settings.Hotkey||Array.FindIndex(settings.PartHotkeys,k=>k==key)!=-1&&settings.PartHotkeys[part]!=key);if(duplicate){bind.SelectedIndex=settings.PartHotkeys[part]==0?0:settings.PartHotkeys[part]-111;return;}settings.PartHotkeys[part]=key;Save();};Add(bind);}
             Add(new Label{Text=L.Choose("Already assigned shortcuts cannot be reused. Each shortcut toggles only its own panel.","Занятое сочетание нельзя назначить повторно. Каждый бинд переключает только свой блок."),AutoSize=true});
             page=0;Check(L.T("Запускать с Windows (в трей)"),settings.Autostart,v=>{if(!UiReview.Active)SettingsManager.SetAutostart(v);settings.Autostart=v;});
-            page=5;Section("DEADLOCK HELPER BY KVINTIN   v1.0");
+            page=5;Section("DEADLOCK HELPER BY KVINTIN   v1.0.1");
+            Add(new Label{Text=L.Choose("Personal noncommercial use. Modifications, sales and redistribution require prior written permission from kvintin, subject to the license exceptions.","Личное некоммерческое использование. Изменения, продажа и распространение требуют письменного разрешения kvintin с учётом исключений лицензии."),AutoSize=true});
+            Button(L.Choose("Read the license","Условия использования"),()=>Process.Start("https://github.com/Alexkvintin/deadlock-helper/blob/main/LICENSE"));
             Section(L.Choose("FEEDBACK & IDEAS","ОТЗЫВЫ И ПОЖЕЛАНИЯ"));
             Add(new Label{Text=L.Choose("Feedback is optional. Share an idea, leave a review or report an issue on GitHub. Nothing is sent automatically.","Обратная связь по желанию. Оставьте отзыв, предложите идею или сообщите об ошибке на GitHub. Ничего не отправляется автоматически."),AutoSize=true});
             Button(L.Choose("Leave a review","Оставить отзыв"),()=>Process.Start("https://github.com/Alexkvintin/deadlock-helper/issues/new?template=review.yml"));

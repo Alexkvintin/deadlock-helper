@@ -1,0 +1,23 @@
+name: Permission request / Запрос разрешения
+description: Request written permission for modification, redistribution or commercial use.
+title: "[Permission] "
+body:
+  - type: markdown
+    attributes:
+      value: "Submitting this form is a request, not permission. Wait for explicit written authorization from kvintin. Do not include private contact details or secrets."
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed use / Что планируется
+    validations:
+      required: true
+  - type: textarea
+    id: changes
+    attributes:
+      label: Changes and distribution / Изменения и распространение
+    validations:
+      required: true
+  - type: textarea
+    id: commercial
+    attributes:
+      label: Commercial terms / Коммерческие условия

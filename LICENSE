@@ -1,23 +1,84 @@
-MIT License
+DEADLOCK HELPER PERSONAL USE LICENSE 1.0
+Effective date: 2 November 2026
+Copyright (c) 2026 kvintin. All rights reserved except as expressly granted below.
 
-Copyright (c) 2026 kvintin and contributors
+1. Scope and ownership
+These terms govern original Deadlock Helper code, documentation and other
+original project materials made available by kvintin under this license
+("Covered Material"). kvintin is the project author's public identity at
+https://github.com/Alexkvintin. Rights in third-party material remain with its
+respective owners. This is a source-available personal-use license, not an
+open-source license.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+2. Permitted personal use
+You may download an official release, install and run it on devices you control
+for your own personal, noncommercial use, and retain a reasonable backup.
+You may inspect publicly available source code and compile an unmodified copy
+for that same use. Using the supplied settings, moving panels and changing
+preferences through the application's interface are permitted configuration,
+not prohibited modifications. You may share links to the official repository
+and release page.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+Screenshots, reviews, gameplay videos and livestreams showing the application
+are permitted, including monetized videos or streams, provided they do not
+redistribute the software or falsely suggest authorship or endorsement.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+3. Actions requiring prior written permission
+Unless an exception in section 6 applies, you must obtain prior written
+permission from kvintin before you:
+(a) sell, rent, sublicense, commercially bundle, or charge for access to the
+    Covered Material or a derivative of it;
+(b) modify, translate, adapt, merge, or create derivative software from the
+    Covered Material, even if the proposed change is small;
+(c) redistribute, upload, mirror, publish or otherwise supply the Covered
+    Material or modified builds to other people, for payment or free of charge;
+(d) incorporate the Covered Material into another product or service.
 
-Valve character artwork in assets/ is excluded from this license.
+Changing a line, adding a small feature, changing a name or logo, or repackaging
+files does not transfer authorship or remove these restrictions. You must not
+remove or falsify copyright, license, attribution or author notices, present
+kvintin's work as your own, or imply approval by kvintin without permission.
+
+4. Permission requests
+Request permission through the official repository's permission-request form:
+https://github.com/Alexkvintin/deadlock-helper/issues/new?template=permission.yml
+State the proposed use, changes, distribution and commercial terms.
+Permission must be expressly granted in writing by kvintin and covers only the
+scope stated in that grant. Silence, an unanswered request, a download, a fork,
+or a submitted contribution is not permission. A separate written agreement
+may grant additional rights.
+
+5. Names and branding
+No trademark or endorsement license is granted. Accurate reference to the
+project and author is permitted. Do not use the project's name or branding to
+misrepresent a modified or unofficial product as an official release, or claim
+that the original project was created by someone else. This clause does not
+claim ownership of Valve's names, artwork or marks.
+
+6. Rights these terms do not override
+These terms do not revoke, narrow or replace any rights already granted for
+material under an earlier applicable license. They do not override third-party
+licenses, mandatory statutory rights, or rights required by GitHub's applicable
+terms for hosting, viewing and using GitHub's fork functionality. Such platform
+rights do not by themselves grant broader rights to sell, rebrand or distribute
+new Covered Material outside their scope. Consult docs/CREDITS.md and the
+included dependency notices for third-party material.
+
+7. Termination
+Rights granted solely by this license terminate if you breach its conditions.
+On termination, stop exercising those rights and delete copies held solely
+under this license. Termination does not affect independently held rights under
+section 6. Additional permission must be obtained before resuming the
+terminated use.
+
+8. Warranty and liability
+To the extent permitted by applicable law, the Covered Material is provided
+"AS IS", without warranties of any kind, including merchantability, fitness
+for a particular purpose or noninfringement. To that extent, kvintin is not
+liable for damages arising from its use or inability to use it. Nothing here
+excludes liability or consumer rights that cannot lawfully be excluded.
+
+9. General
+No rights are granted by implication. If a provision is unenforceable, the
+remaining provisions continue to apply to the extent permitted by law. The
+English text is the operative license; any summary is for convenience.
