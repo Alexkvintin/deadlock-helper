@@ -1,23 +1,44 @@
 name: Permission request / Запрос разрешения
-description: Request written permission for modification, redistribution or commercial use.
+description: Request permission for redistribution or monetization under License 1.1.
 title: "[Permission] "
 body:
   - type: markdown
     attributes:
-      value: "Submitting this form is a request, not permission. Wait for explicit written authorization from kvintin. Do not include private contact details or secrets."
+      value: |
+        Private personal noncommercial modifications need no permission under License 1.1.
+        Use this form for redistribution or monetization. Submission is not authorization;
+        wait for explicit written permission from kvintin before the requested activity.
+        Earlier grants, statutory rights and GitHub rights remain unaffected.
+        Issues are public: do not include secrets or private contact details.
   - type: textarea
     id: proposal
     attributes:
       label: Proposed use / Что планируется
+      description: Describe the intended use, audience and requested permission.
     validations:
       required: true
   - type: textarea
     id: changes
     attributes:
       label: Changes and distribution / Изменения и распространение
+      description: Identify changes, source or binary distribution, channels and unofficial branding.
     validations:
       required: true
   - type: textarea
     id: commercial
     attributes:
-      label: Commercial terms / Коммерческие условия
+      label: Revenue sources / Источники дохода
+      description: List sales, subscriptions, premium features, ads, sponsors, affiliate links, fundraising or other income, even for a free download. Write none if applicable.
+    validations:
+      required: true
+  - type: textarea
+    id: attribution
+    attributes:
+      label: Attribution / Указание авторства
+      description: Explain where the author, project link and attribution will appear.
+      value: |
+        Original author: kvintin
+        Original project: https://github.com/Alexkvintin/deadlock-helper
+        Attribution: Based on Deadlock Helper, originally created by kvintin.
+    validations:
+      required: true

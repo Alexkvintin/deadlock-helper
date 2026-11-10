@@ -63,6 +63,11 @@ Run `build.ps1` on Windows with .NET Framework 4.8 to compile the desktop applic
 
 ## License and author
 
-**Deadlock Helper by kvintin** is source-available for inspection, with personal noncommercial use permitted under the [Deadlock Helper Personal Use License](LICENSE). Selling, modifying, republishing or redistributing covered material requires **prior written permission from kvintin**. Adding a line or changing a name does not transfer authorship. Screenshots, reviews and gameplay videos are welcome under the license.
+**Deadlock Helper by kvintin** uses the [Deadlock Helper Personal Use License 1.1](LICENSE), a source-available license, not an open-source license.
 
-[Request permission](https://github.com/Alexkvintin/deadlock-helper/issues/new?template=permission.yml). Earlier license grants, third-party rights and mandatory legal exceptions are preserved by section 6. Game artwork and dependencies retain their own notices; this project is not affiliated with Valve.
+- **Allowed for free:** download, use, study, compile and privately modify the code for your own noncommercial purposes.
+- **Written permission required:** publish or redistribute original or modified code/builds; sell the app, offer subscriptions or premium features, or monetize it through in-app advertising, sponsorships, revenue-generating referral links or other revenue sources, even if downloads are free.
+- **Credit is mandatory for authorized modifications:** name kvintin as the original author, link the original project, and include “Based on Deadlock Helper, originally created by kvintin.” Modification authors may credit their own additions only. Attribution does not replace permission.
+- **Reviews and streams are welcome**, including monetized YouTube videos, provided they do not distribute software/source code or misrepresent authorship.
+
+[Request written permission](https://github.com/Alexkvintin/deadlock-helper/issues/new?template=permission.yml). Earlier grants, statutory rights and rights under GitHub's applicable terms are preserved by section 6. Third-party components retain their own licenses; kvintin's permission does not grant rights to Valve artwork or other third-party materials. See [credits](docs/CREDITS.md) and the [licensing review](docs/LICENSE-REVIEW.md). The full LICENSE controls over this summary.

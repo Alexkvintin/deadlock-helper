@@ -21,4 +21,4 @@ For compatibility with existing installations, local settings remain under `%LOC
 Statistics require current source data. A missing value is not zero. Public broadcasts may not be available immediately. Exact event timers, lane swaps and final reports depend on what the current match source exposes. Closing the game is not proof that a match finished.
 
 ## License
-Personal noncommercial use is permitted. Covered modifications, sales and redistribution require prior written permission from kvintin. See the root LICENSE for the full terms, preserved prior rights and third-party exceptions.
+License 1.1 permits free personal noncommercial use, study and private modification. Publishing or redistributing original or modified code/builds and monetizing the application require prior written permission from kvintin, subject to preserved rights. Authorized modifications must credit the original author and project. Monetized reviews and streams are permitted under the media exception. See the root LICENSE for the complete terms, prior grants, GitHub rights and third-party exceptions.

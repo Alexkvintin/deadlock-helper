@@ -1,5 +1,5 @@
-DEADLOCK HELPER PERSONAL USE LICENSE 1.0
-Effective date: 2 November 2026
+DEADLOCK HELPER PERSONAL USE LICENSE 1.1
+Effective date: 10 November 2026
 Copyright (c) 2026 kvintin. All rights reserved except as expressly granted below.
 
 1. Scope and ownership
@@ -11,41 +11,61 @@ respective owners. This is a source-available personal-use license, not an
 open-source license.
 
 2. Permitted personal use
-You may download an official release, install and run it on devices you control
-for your own personal, noncommercial use, and retain a reasonable backup.
-You may inspect publicly available source code and compile an unmodified copy
-for that same use. Using the supplied settings, moving panels and changing
-preferences through the application's interface are permitted configuration,
-not prohibited modifications. You may share links to the official repository
-and release page.
+Subject to this license and the preserved rights in section 6, you may, free
+of charge, download, copy, install, run, study and modify the Covered Material,
+including its source code, and compile original or modified copies for your
+own personal, noncommercial purposes on devices you control. You may retain
+backups. These permissions do not authorize distribution to others or
+monetization. You may share links to the official repository and release page.
 
-Screenshots, reviews, gameplay videos and livestreams showing the application
-are permitted, including monetized videos or streams, provided they do not
-redistribute the software or falsely suggest authorship or endorsement.
+Screenshots, reviews, YouTube videos, gameplay videos and livestreams showing
+the application are permitted, including monetized reviews, videos and streams,
+provided they do not distribute its source code or software, misrepresent
+original authorship, or falsely imply endorsement. Revenue from that media
+alone is not prohibited monetization of the application under section 3.
+Section 6 continues to apply to this exception.
 
-3. Actions requiring prior written permission
-Unless an exception in section 6 applies, you must obtain prior written
-permission from kvintin before you:
-(a) sell, rent, sublicense, commercially bundle, or charge for access to the
-    Covered Material or a derivative of it;
-(b) modify, translate, adapt, merge, or create derivative software from the
-    Covered Material, even if the proposed change is small;
-(c) redistribute, upload, mirror, publish or otherwise supply the Covered
-    Material or modified builds to other people, for payment or free of charge;
-(d) incorporate the Covered Material into another product or service.
+3. Distribution, monetization and attribution
+Except as permitted by section 2 or preserved by section 6, prior written
+permission from kvintin is required to:
+(a) publish, upload, mirror, redistribute or otherwise supply the Covered
+    Material, including original or modified source code and builds, to others;
+(b) sell, rent, commercially bundle, sublicense for payment, or charge for
+    access to the application or products derived from the Covered Material;
+(c) offer paid subscriptions, premium features or paid services based on them;
+(d) place advertising banners, sponsored integrations, or revenue-generating
+    affiliate or referral links in the application or such derived products;
+(e) otherwise monetize or obtain revenue from the application or such derived
+    products, including related advertising, sponsorships or fundraising.
+These restrictions apply even when the application is distributed free of
+charge. Private modifications allowed by section 2 need no separate permission.
 
-Changing a line, adding a small feature, changing a name or logo, or repackaging
-files does not transfer authorship or remove these restrictions. You must not
-remove or falsify copyright, license, attribution or author notices, present
-kvintin's work as your own, or imply approval by kvintin without permission.
+For any distribution of a modification authorized under this license, retain
+copyright and license notices and clearly display the following attribution
+in the accompanying documentation, the distribution page (if any), and an
+About or equivalent credits location in the application (if it has a UI):
+
+Original author: kvintin
+Original project: https://github.com/Alexkvintin/deadlock-helper
+Attribution: Based on Deadlock Helper, originally created by kvintin.
+
+Clearly identify the version as unofficial and describe the changes. Authors
+of modifications may claim authorship of their own additions, but not the
+original code or project. Adding a line, renaming or repackaging the application
+does not transfer original authorship. Do not remove or falsify copyright,
+license or author notices or imply approval by kvintin without permission.
+Attribution alone is not permission to distribute or monetize. These conditions
+do not restrict independently held rights preserved in section 6.
 
 4. Permission requests
 Request permission through the official repository's permission-request form:
 https://github.com/Alexkvintin/deadlock-helper/issues/new?template=permission.yml
-State the proposed use, changes, distribution and commercial terms.
+State the proposed use, changes, distribution, attribution and all planned
+revenue sources, including whether the application will be free to download.
 Permission must be expressly granted in writing by kvintin and covers only the
 scope stated in that grant. Silence, an unanswered request, a download, a fork,
-or a submitted contribution is not permission. A separate written agreement
+or a submitted contribution is not additional permission under this license.
+This does not limit rights preserved in section 6. A separate written agreement
 may grant additional rights.
 
 5. Names and branding
