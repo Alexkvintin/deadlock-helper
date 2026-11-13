@@ -74,6 +74,7 @@ namespace DeadlockOverlay {
         readonly bool friendly;
         readonly HeroImages images;
         readonly ArtCache art=new ArtCache();
+        readonly ScoutRankImages ranks=new ScoutRankImages();
         readonly Font heading=new Font("Segoe UI",9,FontStyle.Bold,GraphicsUnit.Pixel);
         readonly Font normal=new Font("Segoe UI Semibold",13,FontStyle.Bold,GraphicsUnit.Pixel);
         readonly Font small=new Font("Segoe UI",11,FontStyle.Bold,GraphicsUnit.Pixel);
@@ -120,7 +121,7 @@ namespace DeadlockOverlay {
             Rectangle desired=new Rectangle(bounds.Left+(int)((bounds.Width-size.Width)*x),bounds.Top+(int)((bounds.Height-size.Height)*y),size.Width,size.Height);
             desired=WidgetLayout.Bounds(s,bounds,friendly?0:1,leftTeam);bool geometry=Bounds!=desired;if(geometry)Bounds=desired;
             BackgroundOpacity=placement.Opacity;
-            string sig=Json.Serializer().Serialize(new { L.Language,stats.Total,stats.ObjectTotal,stats.Status,s.Numbers,s.Bars,s.Compact,s.ShowHealing,healingTotal,scale,spectator,BackgroundOpacity, players=stats.Players.Select((p,i)=>new {p.Name,p.Hero,p.HeroName,p.Damage,p.ObjectDamage,p.Healing,p.UnspentSouls,p.Local,valid=available[i],objectValid=objectAvailable[i],healValid=healingAvailable[i]}).ToArray() });
+            string sig=Json.Serializer().Serialize(new { L.Language,ScoutDecorations.Revision,s.ShowRanks,s.Scout.ShowParty,s.Scout.ShowLikelyParty,s.Scout.OverlayParty,s.Scout.PartyIntensity,stats.Total,stats.ObjectTotal,stats.Status,s.Numbers,s.Bars,s.Compact,s.ShowHealing,healingTotal,scale,spectator,BackgroundOpacity, players=stats.Players.Select((p,i)=>new {p.Name,p.Hero,p.HeroName,p.Damage,p.ObjectDamage,p.Healing,p.UnspentSouls,p.Local,valid=available[i],objectValid=objectAvailable[i],healValid=healingAvailable[i]}).ToArray() });
             sig+=friendly&&s.ShowItems?Json.Serializer().Serialize(advice):"";
             if(signature!=sig || geometry) { signature=sig; Present(); }
             if(!PreviewOnly&&!Visible) Show();
@@ -156,7 +157,15 @@ namespace DeadlockOverlay {
                     g.FillRectangle(track,14,y,29,29);
                     if(icon!=null) g.DrawImage(icon,new Rectangle(14,y,29,29));
                     else OverlayText.Draw(g,"?",normal,muted,23,y+6);
-                    OverlayText.Draw(g,p.Name+(p.Local?" •":""),normal,p.Local?a:white,new RectangleF(52,y-1,184,17),ellipsis);
+                    var decoration=ScoutDecorations.Get(PlayerInsightEngine.AccountId(p.SteamId));
+                    var rankIcon=settings.ShowRanks?ranks.Get(decoration.RankPath):null;
+                    OverlayText.Draw(g,p.Name+(p.Local?" •":""),normal,p.Local?a:white,new RectangleF(52,y-1,decoration.Tags.Length>0?100:rankIcon==null?184:159,17),ellipsis);
+                    if(rankIcon!=null)g.DrawImage(rankIcon,new Rectangle(215,y-3,22,22));
+                    if(decoration.Hero==p.Hero)for(int t=0;t<Math.Min(3,decoration.Tags.Length);t++)ScoutGlyphs.Draw(g,decoration.Tags[t].Key,new RectangleF(158+t*17,y+1,14,14),Theme.Green);
+                    var party=decoration.Party;if(settings.Scout.OverlayParty&&ScoutDecorations.VisibleParty(party,settings.Scout)){
+                        using(var pen=new Pen(Color.FromArgb((int)(255*settings.Scout.PartyIntensity/100.0),party.Color),1.5f)){if(party.Confidence==PartyConfidence.Likely)pen.DashStyle=DashStyle.Dash;g.DrawRectangle(pen,9,y-4,232,59);}
+                        using(var ink=new SolidBrush(party.Color))OverlayText.Draw(g,party.Group+(party.Confidence==PartyConfidence.Likely?"?":""),small,ink,new RectangleF(14,y+34,35,17),ellipsis);
+                    }
                     Theme.DrawHeroBalance(g,p.HeroName,p.UnspentSouls,available[i],small,52,y+15,184);
                     if(settings.ShowHealing){
                         OverlayText.Draw(g,settings.Numbers?(available[i]?Format(p.Damage.Value,settings.Compact):"—"):"",normal,heroInk,new RectangleF(52,y+32,57,17),right);
@@ -178,7 +187,7 @@ namespace DeadlockOverlay {
             }
         }
         public static string Format(long n,bool compact) { return compact&&n>=10000 ? (n/1000.0).ToString("0.0",CultureInfo.InvariantCulture)+"k" : n.ToString("N0",CultureInfo.GetCultureInfo(L.Language=="ru"?"ru-RU":"en-US")); }
-        protected override void Dispose(bool disposing) { if(disposing) { art.Dispose();heading.Dispose(); normal.Dispose(); small.Dispose(); totalFont.Dispose(); ellipsis.Dispose(); right.Dispose(); } base.Dispose(disposing); }
+        protected override void Dispose(bool disposing) { if(disposing) { ranks.Dispose();art.Dispose();heading.Dispose(); normal.Dispose(); small.Dispose(); totalFont.Dispose(); ellipsis.Dispose(); right.Dispose(); } base.Dispose(disposing); }
     }
 }
 

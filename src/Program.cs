@@ -41,6 +41,7 @@ namespace DeadlockOverlay {
         readonly HeroImages images=new HeroImages();
         readonly WidgetManager widgets=new WidgetManager();
         readonly SettingsWindow window;
+        readonly ScoutController scout;
         readonly MatchViewer viewer;
         readonly NotifyIcon tray;
         readonly HotkeyWindow hotkey=new HotkeyWindow();
@@ -81,7 +82,9 @@ namespace DeadlockOverlay {
             ownDetector.Status+=message=>{lock(gate){if(!closing)detectorError=message;}};
             localSource.Snapshot+=packet=>{lock(gate){if(!closing)pendingLocal=packet;}};
             window=new SettingsWindow(settings,Changed,SetDemo);
-            var settingsScreen=Screen.AllScreens.FirstOrDefault(s=>!s.Primary);
+            scout=new ScoutController(settings,window);
+            var gameArea=Native.OverlayGameBounds();var gameScreen=gameArea.IsEmpty?null:Screen.FromRectangle(gameArea);
+            var settingsScreen=gameScreen==null?Screen.AllScreens.FirstOrDefault(s=>!s.Primary):Screen.AllScreens.FirstOrDefault(s=>s.DeviceName!=gameScreen.DeviceName);
             if(settingsScreen!=null){window.StartPosition=FormStartPosition.Manual;var area=settingsScreen.WorkingArea;window.Location=new Point(area.Left+(area.Width-window.Width)/2,area.Top+(area.Height-window.Height)/2);}
             viewer=new MatchViewer(id=>{settings.AutoMatch=false;settings.LiveMatchId=id;SettingsManager.Save(settings);autoError=null;RestartLive();ShowViewer(id);});
             window.ViewMatchRequested+=ShowViewer;
@@ -89,7 +92,7 @@ namespace DeadlockOverlay {
             window.EndSessionRequested+=EndSession;
             left=new OverlayRenderer(true,images);right=new OverlayRenderer(false,images);widgets.Add(left);widgets.Add(right);
             hud=new HudOverlay(hudAdvice);widgets.Add(hud);for(int i=0;i<3;i++){mapWidgets[i]=new HudOverlay(hudAdvice,i+3);widgets.Add(mapWidgets[i]);}for(int i=0;i<6;i++)handles[i]=new LayoutHandle(i);
-            tray=new NotifyIcon { Text="Deadlock Helper by kvintin · v1.0.1",Icon=Design.AppIcon,Visible=true };
+            tray=new NotifyIcon { Text="Deadlock Helper by kvintin · v1.1.0-beta.1",Icon=Design.AppIcon,Visible=true };
             var menu=new ContextMenuStrip(); menu.Items.Add(L.T("Настройки"),null,(s,e)=>Open());menu.Items.Add(L.T("Последняя сводка"),null,(s,e)=>{if(lastSummary!=null)new SummaryWindow(lastSummary).Show();else Process.Start("explorer.exe",SettingsManager.Folder);}); menu.Items.Add(L.T("Скрыть / показать"),null,(s,e)=>{hidden=!hidden;Refresh();});menu.Items.Add(L.T("Выход"),null,(s,e)=>Application.Exit());tray.ContextMenuStrip=menu;tray.DoubleClick+=(s,e)=>Open();
             hotkey.Toggle+=()=>{hidden=!hidden;Refresh();};hotkey.TogglePart+=part=>{settings.TogglePart(part);SettingsManager.Save(settings);window.SyncVisibility();Refresh();};Changed();
             menu.Items.Insert(1,new ToolStripMenuItem(L.Choose("Match viewer","Просмотр матча"),null,(s,e)=>ShowViewer(selectedMatch)));
@@ -134,6 +137,7 @@ namespace DeadlockOverlay {
             if(error!=null&&selectedMatch<=0){state.SourceStatus=error;autoError=error;}
             Dictionary<string,object> packet;string demoPacket;lock(gate){packet=pendingReal;demoPacket=pendingDemo;pendingDemo=null;pendingReal=null;}
             if(!matchCompleted&&!localMode)try{if(state.Demo&&demoPacket!=null)state.Apply(demoPacket,DateTime.UtcNow);else if(!state.Demo&&packet!=null)state.Apply(packet,DateTime.UtcNow);}catch(Exception e){Log.Write("Invalid snapshot",e);state.Healthy=false;state.SourceStatus=L.T("Ошибка формата данных");}
+            scout.ObserveState(state);
             var map=mapEvents!=null?mapEvents.Snapshot(DateTime.UtcNow,state.GameTick):new MapSnapshot();
             if(localMode&&latestLocal!=null){map=LocalSnapshot.Map(latestLocal);map.Fresh=(DateTime.UtcNow-localRead).TotalSeconds<2;if(map.Fresh&&!map.Paused&&map.Seconds.HasValue)map.Seconds+=(DateTime.UtcNow-localRead).TotalSeconds;}
             lock(gate){if(!localMode&&clockMatch==selectedMatch&&(DateTime.UtcNow-clockRead).TotalSeconds<12){map.Seconds=clockSeconds+(map.Paused?0:(DateTime.UtcNow-clockRead).TotalSeconds);map.ScreenClock=true;map.Fresh=true;}}
@@ -157,6 +161,7 @@ namespace DeadlockOverlay {
         void HandleLocal(){
             Dictionary<string,object> raw;lock(gate){raw=pendingLocal;pendingLocal=null;}
             if(!settings.AutoMatch||state.Demo||raw==null)return;
+            scout.Observe(raw);
             string kind=Json.Str(raw,"kind");
             if(kind=="unavailable"){if(localMode){state.Healthy=false;state.SourceStatus=L.Choose("Local source unavailable · reconnecting","Локальный источник недоступен · переподключение");}return;}
             if(kind=="idle"||(kind=="snapshot"&&Json.Number(raw,"match_id")==0)){
@@ -212,7 +217,7 @@ namespace DeadlockOverlay {
             if(!hotkeyOk)text=L.T("Горячая клавиша занята — выберите другую.\n")+text;
             window.SetStatus(text);
         }
-        void Cleanup() { if(closing)return;closing=true;localSource.Dispose();ownDetector.Dispose();foreach(var handle in handles)handle.Dispose();hudAdvice.Dispose();if(mapEvents!=null)mapEvents.Dispose();advisor.Dispose();pulse.Stop();pulse.Dispose();if(detector!=null)detector.Dispose();if(real!=null)real.Dispose();if(demo!=null)demo.Dispose();hotkey.Dispose();tray.Visible=false;var menu=tray.ContextMenuStrip;tray.Dispose();menu.Dispose();widgets.Dispose();images.Dispose();viewer.Dispose();window.Dispose(); }
+        void Cleanup() { if(closing)return;closing=true;scout.Dispose();localSource.Dispose();ownDetector.Dispose();foreach(var handle in handles)handle.Dispose();hudAdvice.Dispose();if(mapEvents!=null)mapEvents.Dispose();advisor.Dispose();pulse.Stop();pulse.Dispose();if(detector!=null)detector.Dispose();if(real!=null)real.Dispose();if(demo!=null)demo.Dispose();hotkey.Dispose();tray.Visible=false;var menu=tray.ContextMenuStrip;tray.Dispose();menu.Dispose();widgets.Dispose();images.Dispose();viewer.Dispose();window.Dispose(); }
         protected override void Dispose(bool disposing) { if(disposing)Cleanup();base.Dispose(disposing); }
     }
 }

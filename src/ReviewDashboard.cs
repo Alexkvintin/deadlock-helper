@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
@@ -52,35 +52,7 @@ namespace DeadlockOverlay {
  public sealed class PlayerDetailWindow : Form {
   protected override bool ShowWithoutActivation{get{return true;}}
   public PlayerDetailWindow(MatchSummary summary,Player player){Text=player.Name+" · "+player.HeroName;Icon=Design.AppIcon;AutoScaleDimensions=new SizeF(96,96);AutoScaleMode=AutoScaleMode.Dpi;Size=new Size(1120,800);MinimumSize=new Size(800,550);StartPosition=FormStartPosition.CenterParent;BackColor=Theme.Background;TopMost=true;
-   var scroll=new Panel{Dock=DockStyle.Fill,AutoScroll=true};var canvas=new PlayerDetailCanvas(summary,player){Width=1080};scroll.Controls.Add(canvas);scroll.Resize+=(a,e)=>canvas.Width=Math.Max(760,scroll.ClientSize.Width-22);Controls.Add(scroll);Shown+=(a,e)=>Design.Fit(this);
+   var canvas=new PlayerDetailCanvas(summary,player){Dock=DockStyle.Fill};Controls.Add(canvas);Shown+=(a,e)=>Design.Fit(this);
   }
- }
- public sealed class PlayerDetailCanvas : Control {
-  readonly MatchSummary summary;readonly Player player;readonly ImpactRow row;readonly HeroImages portraits=new HeroImages();readonly ArtCache art=new ArtCache();readonly ToolTip tooltip=new ToolTip();int selected;
-  public PlayerDetailCanvas(MatchSummary s,Player p){summary=s;player=p;row=s.Rank().First(x=>x.Player.Slot==p.Slot);DoubleBuffered=true;BackColor=Theme.Background;Height=720;Resize+=(a,e)=>{Height=(int)(720*Width/1080f);Invalidate();};}
-  protected override void OnPaint(PaintEventArgs e){base.OnPaint(e);var g=e.Graphics;g.ScaleTransform(Width/1080f,Width/1080f);g.SmoothingMode=SmoothingMode.AntiAlias;g.TextRenderingHint=System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
-   var heroArt=art.Get("hero-"+player.Hero);if(heroArt!=null)Design.Cover(g,heroArt,new Rectangle(0,0,290,245));else{var portrait=portraits.Get(player.Hero);if(portrait!=null)g.DrawImage(portrait,45,35,180,180);}
-   Design.Text(g,L.Choose("PLAYER / MATCH ","ИГРОК / МАТЧ ")+summary.MatchId,12,Theme.Gold,new RectangleF(310,26,700,22),true);Design.Text(g,player.Name,34,Theme.Ink,new RectangleF(310,57,690,48),true);Design.Text(g,player.HeroName+" · "+Patrons.Name(player.Team),16,Theme.Muted,new RectangleF(310,110,650,25));
-   Design.Text(g,row.Score.HasValue?row.Score.Value.ToString("0.0")+" "+row.Grade:"—",34,Theme.Green,new RectangleF(310,152,160,50),true);Design.Text(g,L.Choose("IMPACT SCORE","ОЦЕНКА ВКЛАДА"),11,Theme.Muted,new RectangleF(310,205,190,23));
-   Design.Text(g,MatchSummary.N(player.Kills)+" / "+MatchSummary.N(player.Deaths)+" / "+MatchSummary.N(player.Assists),26,Theme.Ink,new RectangleF(530,164,245,40),true);Design.Text(g,"K / D / A",11,Theme.Muted,new RectangleF(530,205,245,23));
-   Design.Text(g,MatchSummary.N(player.Souls),26,Theme.SoulsBlue,new RectangleF(806,164,245,40),true);Design.Text(g,L.Choose("NET WORTH","ЦЕННОСТЬ ГЕРОЯ"),11,Theme.Muted,new RectangleF(806,205,245,23));
-   string[] tabs={L.Choose("Overview","Обзор"),L.Choose("Progression","Динамика"),L.Choose("Items","Предметы"),L.Choose("Play style","Стиль игры")};
-   for(int i=0;i<4;i++){var r=new RectangleF(24+i*258,260,250,42);Theme.Fill(g,selected==i?Color.FromArgb(28,66,60):Theme.Card,r,6);Design.Text(g,tabs[i],15,selected==i?Theme.Green:Theme.Ink,new RectangleF(r.X+16,r.Y+11,220,24),true);}
-   if(selected==1||selected==2){Theme.Fill(g,Theme.Card,new RectangleF(24,325,1032,300),9);Design.Text(g,selected==1?L.Choose("No timeline recorded","История изменений не записана"):L.Choose("Purchase history is unavailable","История покупок недоступна"),24,Theme.Ink,new RectangleF(55,380,950,40),true);Design.Text(g,L.Choose("This report contains aggregate match totals. No values have been estimated.","В отчёте есть только итоговые показатели. Недостающие значения не вычисляются."),15,Theme.Muted,new RectangleF(55,437,940,35));return;}
-   Theme.Fill(g,Theme.Card,new RectangleF(24,325,410,340),9);Design.Frame(g,new RectangleF(24,325,410,340),Design.Line);Design.Text(g,L.Choose("WITHIN THIS MATCH","СРАВНЕНИЕ В ЭТОМ МАТЧЕ"),13,Theme.Gold,new RectangleF(44,344,370,25),true);
-   var values=SummaryView.Values(row);for(int ring=1;ring<=4;ring++)using(var pen=new Pen(Color.FromArgb(53,72,73)))g.DrawPolygon(pen,SummaryView.Points(Enumerable.Repeat(ring/4.0,5).ToArray(),230,497,105));
-   if(row.Score.HasValue){var points=SummaryView.Points(values,230,497,105);using(var fill=new SolidBrush(Color.FromArgb(65,Theme.Green)))g.FillPolygon(fill,points);using(var pen=new Pen(Theme.Green,2))g.DrawPolygon(pen,points);}
-   PointF[] labels={new PointF(185,373),new PointF(327,451),new PointF(282,590),new PointF(84,590),new PointF(46,451)};
-   for(int i=0;i<5;i++)Design.Text(g,SummaryView.Labels[i],10,Theme.Muted,new RectangleF(labels[i].X,labels[i].Y,100,20));
-   Design.Text(g,L.Choose("Relative to the best value among these 12 players","Относительно максимума среди этих 12 игроков"),11,Theme.Muted,new RectangleF(44,630,370,23));
-   Theme.Fill(g,Theme.Card,new RectangleF(454,325,602,340),9);Design.Frame(g,new RectangleF(454,325,602,340),Design.Line);
-   Design.Text(g,selected==3?L.Choose("STRENGTHS / CONTRIBUTION","СИЛЬНЫЕ СТОРОНЫ / ВКЛАД"):L.Choose("PERFORMANCE BREAKDOWN","ПОКАЗАТЕЛИ ИГРОКА"),13,Theme.Gold,new RectangleF(474,344,562,25),true);
-   long?[] raw={player.Damage,player.ObjectDamage,player.Healing,null,player.Souls};Color[] colors={Theme.HeroDamage,Theme.StructureDamage,Theme.Healing,Theme.Green,Theme.SoulsBlue};
-   for(int i=0;i<5;i++){float y=386+i*44;Design.Text(g,SummaryView.Labels[i],13,Theme.Muted,new RectangleF(474,y,230,24));Design.Text(g,i==3?(row.Score.HasValue?(values[i]*100).ToString("0")+"%":"—"):MatchSummary.N(raw[i]),16,colors[i],new RectangleF(852,y,180,24),true);Theme.Fill(g,Color.FromArgb(42,58,62),new RectangleF(474,y+28,557,4),2);if(row.Score.HasValue&&values[i]>0)Theme.Fill(g,colors[i],new RectangleF(474,y+28,(float)(557*values[i]),4),Math.Min(2,(float)(557*values[i]/2)));}
-   Design.Text(g,SummaryView.Strength(row),13,Theme.Gold,new RectangleF(24,686,1032,24));
-  }
-  protected override void OnMouseClick(MouseEventArgs e){base.OnMouseClick(e);float scale=Width/1080f;float x=e.X/scale,y=e.Y/scale;if(y>=260&&y<=302&&x>=24&&x<1056){selected=Math.Min(3,(int)((x-24)/258));Invalidate();}}
-  protected override void OnMouseMove(MouseEventArgs e){base.OnMouseMove(e);float scale=Width/1080f;float y=e.Y/scale;Cursor=y>=260&&y<=302?Cursors.Hand:Cursors.Default;tooltip.SetToolTip(this,y>325?L.Choose("Scores compare players in this match, not the global player population.","Оценки сравнивают участников этого матча, а не всех игроков."):"");}
-  protected override void Dispose(bool disposing){if(disposing){portraits.Dispose();art.Dispose();tooltip.Dispose();}base.Dispose(disposing);}
  }
 }

@@ -28,6 +28,7 @@ namespace DeadlockOverlay {
  }
  public static class LocalSnapshot {
   static readonly Dictionary<int,string> heroes=LoadHeroes();
+  public static string HeroName(int id){string name;return heroes.TryGetValue(id,out name)?name:"Hero #"+id;}
   static Dictionary<int,string> LoadHeroes(){var names=new Dictionary<int,string>();try{foreach(var raw in Json.Serializer().DeserializeObject(File.ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"assets","sources.json"))) as object[]??new object[0]){var h=Json.Obj(raw);names[(int)(Json.Number(h,"id")??0)]=Json.Str(h,"name");}}catch(Exception e){Log.Write("Local hero names",e);}return names;}
   public static double? Number(Dictionary<string,object> d,string key){double n;return double.TryParse(Json.Str(d,key),NumberStyles.Float,CultureInfo.InvariantCulture,out n)&&!double.IsNaN(n)&&!double.IsInfinity(n)?(double?)n:null;}
   public static Dictionary<string,object> Packet(Dictionary<string,object> d){

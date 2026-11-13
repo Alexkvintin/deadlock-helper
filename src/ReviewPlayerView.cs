@@ -1,0 +1,49 @@
+﻿using System;
+using System.Linq;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Windows.Forms;
+using System.Collections.Generic;
+namespace DeadlockOverlay {
+ public sealed partial class PlayerDetailCanvas:Control {
+  readonly MatchSummary summary;readonly Player player;readonly ImpactRow row;
+  readonly HeroImages portraits=new HeroImages();readonly ArtCache art=new ArtCache();readonly ProfileImages pictures=new ProfileImages();readonly ToolTip tooltip=new ToolTip();readonly ScrollRail rail=new ScrollRail();
+  readonly List<KeyValuePair<RectangleF,string>> tips=new List<KeyValuePair<RectangleF,string>>();readonly List<RectangleF> tabs=new List<RectangleF>();
+  readonly string previousComparison;int selected,offset,extent;float dpiOverride;string currentTip="";
+  float Zoom{get{return dpiOverride>0?dpiOverride/96:DeviceDpi/96f;}}float ContentWidth{get{return Math.Max(270,(Width-14)/Zoom-32);}}
+  public void SetReviewDpi(float dpi){if(!UiReview.Active)throw new InvalidOperationException();dpiOverride=dpi;offset=0;Invalidate();}
+  public PlayerDetailCanvas(MatchSummary s,Player p){summary=s;player=p;previousComparison=ReviewAnalysis.Previous(p,s);row=s.Rank().First(x=>x.Player.Slot==p.Slot);DoubleBuffered=true;BackColor=Theme.Background;Height=720;SetStyle(ControlStyles.ResizeRedraw,true);Controls.Add(rail);rail.Seek+=v=>{offset=v;ClearTip();Invalidate();};tooltip.InitialDelay=300;tooltip.ReshowDelay=100;tooltip.AutoPopDelay=8000;TabStop=true;}
+  protected override void OnHandleCreated(EventArgs e){base.OnHandleCreated(e);if(!UiReview.Active)LoadRecorded();}
+  protected override void OnResize(EventArgs e){base.OnResize(e);rail.Bounds=new Rectangle(Math.Max(0,Width-10),8,8,Math.Max(1,Height-16));ClearTip();}
+  static string T(string en,string ru){return L.Choose(en,ru);}
+  void DrawText(Graphics g,string text,float size,Color color,RectangleF box,bool bold=false){Design.Text(g,text,size,color,box,bold);}
+  void Tip(RectangleF box,string text){tips.Add(new KeyValuePair<RectangleF,string>(box,text));}
+  int Note(Graphics g,string heading,string body,int y,Color accent){int height=70+(int)Math.Ceiling(body.Length/Math.Max(20,ContentWidth/7))*19;Theme.Fill(g,Theme.Card,new RectangleF(16,y,ContentWidth,height),10);DrawText(g,heading,14,accent,new RectangleF(32,y+14,ContentWidth-32,24),true);using(var font=new Font("Bahnschrift",14,GraphicsUnit.Pixel))using(var brush=new SolidBrush(Theme.Ink))using(var format=new StringFormat{Trimming=StringTrimming.EllipsisWord,FormatFlags=StringFormatFlags.LineLimit})g.DrawString(body,font,brush,new RectangleF(32,y+47,ContentWidth-32,height-50),format);return y+height+14;}
+  protected override void OnPaint(PaintEventArgs e){base.OnPaint(e);var g=e.Graphics;g.ScaleTransform(Zoom,Zoom);g.TranslateTransform(0,-offset);g.SmoothingMode=SmoothingMode.AntiAlias;tips.Clear();tabs.Clear();float w=ContentWidth;var banner=new RectangleF(16,16,w,238);Theme.Fill(g,Color.FromArgb(21,35,40),banner,12);
+   var hero=recorded==null?null:pictures.Get(recorded.Art(player.Hero));if(hero==null)hero=art.Get("hero-"+player.Hero);float artWidth=w>=740?Math.Min(310,w*.32f):0;
+   if(hero!=null&&hero.Width>=256&&artWidth>0){var save=g.Save();using(var path=Theme.Round(banner,12))g.SetClip(path);var box=new Rectangle((int)(banner.Right-artWidth),16,(int)artWidth,238);Design.Cover(g,hero,box);using(var shade=new LinearGradientBrush(box,Color.FromArgb(21,35,40),Color.FromArgb(45,21,35,40),0f))g.FillRectangle(shade,box);g.Restore(save);}
+   float identity=w-artWidth-32;ProfileVisuals.Avatar(g,recorded==null?null:pictures.Get(recorded.Avatar(recordedAccount)),new RectangleF(32,38,64,64),player.Name);
+   DrawText(g,player.Name,25,Theme.Ink,new RectangleF(112,37,Math.Max(100,identity-96),35),true);DrawText(g,player.HeroName+" · "+Patrons.Name(player.Team),14,Theme.Gold,new RectangleF(112,78,Math.Max(100,identity-96),25));
+   string result=summary.WinningTeam.HasValue?(summary.WinningTeam==player.Team?T("VICTORY","ПОБЕДА"):T("DEFEAT","ПОРАЖЕНИЕ")):T("RESULT UNAVAILABLE","РЕЗУЛЬТАТ НЕИЗВЕСТЕН");
+   DrawText(g,result+" · "+ScoutProfileData.Duration((int?)summary.DurationSeconds),14,Theme.Green,new RectangleF(32,124,identity,25),true);
+   DrawText(g,T("Match ","Матч ")+summary.MatchId,12,Theme.Muted,new RectangleF(32,154,identity,22));
+   DrawText(g,T("Impact ","Вклад ")+(row.Score.HasValue?row.Score.Value.ToString("0.0",ScoutProfileData.Culture)+" / 100":"—"),23,Theme.Green,new RectangleF(32,186,identity,35),true);Tip(new RectangleF(32,186,identity,35),ImpactProcessor.Explanation);
+   string[] labels={T("Overview","Обзор"),T("Progression","Динамика"),T("Items","Предметы"),T("Play style","Стиль игры")};int cols=w>=600?4:2;float tw=(w-(cols-1)*8)/cols;for(int i=0;i<4;i++){var box=new RectangleF(16+i%cols*(tw+8),270+i/cols*48,tw,40);tabs.Add(box);Theme.Fill(g,selected==i?Color.FromArgb(28,66,60):Theme.Card,box,8);DrawText(g,labels[i],14,selected==i?Theme.Green:Theme.Ink,new RectangleF(box.X+12,box.Y+10,box.Width-24,24),true);}
+   int y=270+((4+cols-1)/cols)*48+16;
+   if(selected==1||selected==2)y=DrawRecorded(g,y);else if(selected==3)y=DrawReflection(g,y);else y=DrawOverview(g,y);
+   extent=Math.Max(0,y+20-(int)(Height/Zoom));offset=Math.Min(offset,extent);rail.SetRange(extent,(int)(Height/Zoom),offset);
+  }
+  int DrawOverview(Graphics g,int y){float w=ContentWidth;int cols=w>=850?3:2;float cw=(w-(cols-1)*12)/cols;string[] labels={"K / D / A",T("Net worth","Ценность героя"),T("Hero damage","Урон героям"),T("Objective damage","Урон строениям"),T("Healing total","Общее лечение"),T("Ally healing","Лечение союзников")};var d=Recorded();string[] values={MatchSummary.N(player.Kills)+" / "+MatchSummary.N(player.Deaths)+" / "+MatchSummary.N(player.Assists),ScoutProfileData.N(player.Souls),ScoutProfileData.N(player.Damage),ScoutProfileData.N(player.ObjectDamage),ScoutProfileData.N(player.Healing),ScoutProfileData.N(d!=null&&d.Available?d.TeamHealing:null)};for(int i=0;i<6;i++)ProfileVisuals.Card(g,new RectangleF(16+i%cols*(cw+12),y+i/cols*116,cw,104),labels[i],values[i],i==4?T("Includes self healing","Включает самолечение"):T("Recorded match total","Записанный итог матча"),i==1?Theme.SoulsBlue:i==2?Theme.HeroDamage:i==3?Theme.StructureDamage:i>=4?Theme.Healing:Theme.Ink);y+=((6+cols-1)/cols)*116+8;
+   float rw=w>=850?(w-16)/2:w;var radar=new RectangleF(16,y,rw,310);Theme.Fill(g,Theme.Card,radar,10);DrawText(g,T("CONTRIBUTION IN THIS MATCH","ВКЛАД В ЭТОМ МАТЧЕ"),13,Theme.Gold,new RectangleF(32,y+16,rw-32,25),true);float cx=radar.X+rw/2,cy=y+167;for(int r=1;r<=4;r++)using(var pen=new Pen(Color.FromArgb(48,68,72)))g.DrawPolygon(pen,SummaryView.Points(Enumerable.Repeat(r/4.0,5).ToArray(),cx,cy,87));if(row.Score.HasValue){var points=SummaryView.Points(SummaryView.Values(row),cx,cy,87);using(var fill=new SolidBrush(Color.FromArgb(60,Theme.Green)))g.FillPolygon(fill,points);using(var pen=new Pen(Theme.Green,2))g.DrawPolygon(pen,points);}for(int i=0;i<5;i++){double a=-Math.PI/2+i*2*Math.PI/5;DrawText(g,SummaryView.Labels[i],11,Theme.Muted,new RectangleF(cx+(float)Math.Cos(a)*114-43,cy+(float)Math.Sin(a)*114-8,90,22));}Tip(radar,T("Relative to the highest value in this match; not a global skill rating.","Относительно максимума в этом матче; не глобальная оценка навыка."));
+   float x=w>=850?32+rw:16;int by=w>=850?y:y+324;Theme.Fill(g,Theme.Card,new RectangleF(x,by,rw,310),10);DrawText(g,T("TEAM COMPARISON","СРАВНЕНИЕ КОМАНД"),13,Theme.Gold,new RectangleF(x+16,by+16,rw-32,25),true);Func<Player,long?>[] metrics={p=>p.Damage,p=>p.ObjectDamage,p=>p.Healing,p=>p.Souls};string[] names={labels[2],labels[3],labels[4],labels[1]};for(int i=0;i<4;i++){var left=summary.Players.Where(p=>p.Team==2).Select(metrics[i]).ToArray();var right=summary.Players.Where(p=>p.Team==3).Select(metrics[i]).ToArray();long? a=left.Length==6&&left.All(v=>v.HasValue)?left.Sum(v=>v.Value):(long?)null,b=right.Length==6&&right.All(v=>v.HasValue)?right.Sum(v=>v.Value):(long?)null;DrawText(g,names[i],12,Theme.Muted,new RectangleF(x+16,by+60+i*55,rw-32,20));DrawText(g,ScoutProfileData.N(a)+"  /  "+ScoutProfileData.N(b),17,Theme.Ink,new RectangleF(x+16,by+80+i*55,rw-32,25));}Tip(new RectangleF(x,by,rw,310),"Hidden King / Archmother");y=by+324;
+   return Note(g,T("MATCH HIGHLIGHTS","ГЛАВНОЕ В МАТЧЕ"),ReviewAnalysis.Compare(summary,player),y,Theme.Gold);
+  }
+  int DrawReflection(Graphics g,int y){y=Note(g,T("YOUR CONTRIBUTION","ВАШ ВКЛАД"),ReviewAnalysis.Compare(summary,player),y,Theme.Green);y=Note(g,T("RECORDED DEVELOPMENT","ЗАПИСАННАЯ ДИНАМИКА"),ReviewAnalysis.Progress(Recorded()),y,Theme.SoulsBlue);return Note(g,T("PREVIOUS GAMES","ПРЕДЫДУЩИЕ ИГРЫ"),previousComparison,y,Theme.Muted);}
+  void ClearTip(){currentTip="";tooltip.Hide(this);tooltip.RemoveAll();}
+  protected override void OnMouseClick(MouseEventArgs e){base.OnMouseClick(e);var point=new PointF(e.X/Zoom,e.Y/Zoom+offset);int tab=tabs.FindIndex(r=>r.Contains(point));if(tab>=0){selected=tab;offset=0;ClearTip();if(!UiReview.Active)LoadRecorded();Invalidate();}}
+  protected override void OnMouseMove(MouseEventArgs e){base.OnMouseMove(e);var point=new PointF(e.X/Zoom,e.Y/Zoom+offset);string next=tips.Where(t=>t.Key.Contains(point)).Select(t=>t.Value).FirstOrDefault()??"";if(next!=currentTip){tooltip.Hide(this);tooltip.RemoveAll();currentTip=next;tooltip.SetToolTip(this,next);}Cursor=tabs.Any(t=>t.Contains(point))?Cursors.Hand:Cursors.Default;}
+  protected override void OnMouseLeave(EventArgs e){base.OnMouseLeave(e);ClearTip();}
+  protected override void OnMouseWheel(MouseEventArgs e){base.OnMouseWheel(e);offset=Math.Max(0,Math.Min(extent,offset-e.Delta/3));ClearTip();Invalidate();}
+  protected override void Dispose(bool disposing){if(disposing){if(recorded!=null)recorded.Dispose();if(reviewAssets!=null)reviewAssets.Dispose();pictures.Dispose();portraits.Dispose();art.Dispose();tooltip.Dispose();}base.Dispose(disposing);}
+ }
+}

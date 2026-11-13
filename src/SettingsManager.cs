@@ -1,14 +1,16 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Security.Cryptography;
 using Microsoft.Win32;
 
 namespace DeadlockOverlay {
     public sealed class Settings {
+        public ScoutOptions Scout=new ScoutOptions();
         public bool Enabled=true, Sort=true, Numbers=true, Bars=true, Compact=true, Autostart=false, Diagnostics=false;
         public double Scale=1, Opacity=0.88, LeftX=0.015, LeftY=0.30, RightX=0.985, RightY=0.30;
         public int Hotkey=119; // Ctrl+Shift+F8
         public int[] PartHotkeys=new int[6];
+        public bool ShowRanks=true;
         public bool ShowHiddenKing=true,ShowArchmother=true,AvoidOverlap=true;
         public void TogglePart(int part){if(part==0)ShowHiddenKing=!ShowHiddenKing;else if(part==1)ShowArchmother=!ShowArchmother;else if(part==2)ShowItems=!ShowItems;else if(part==3)ShowCrystals=!ShowCrystals;else if(part==4)ShowMidBoss=!ShowMidBoss;else if(part==5)ShowRift=!ShowRift;}
         public int AdvisorHero=0,AdvisorPhase=0;
@@ -24,6 +26,7 @@ namespace DeadlockOverlay {
         public WidgetPlacement[] Layout;
         public WidgetPlacement Placement(int index){if(Layout==null||Layout.Length!=6)Layout=new[]{new WidgetPlacement(LeftX,LeftY,Scale,Opacity),new WidgetPlacement(RightX,RightY,Scale,Opacity),new WidgetPlacement(.5,.15,1,1),new WidgetPlacement(.20,.15,1,1),new WidgetPlacement(.80,.15,1,1),new WidgetPlacement(.5,.145,1,1)};if(Layout[index]==null)Layout[index]=new WidgetPlacement(.5,.2,1,1);return Layout[index];}
         public void Validate() {
+            if(Scout==null)Scout=new ScoutOptions();Scout.Validate();
             if(Language!="ru")Language="en";
             Scale=Clamp(Scale,0.6,1.8,1); Opacity=Clamp(Opacity,0.25,1,0.88);
             LeftX=Clamp(LeftX,0,1,0.015); LeftY=Clamp(LeftY,0,1,0.3);

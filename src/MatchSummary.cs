@@ -29,7 +29,7 @@ namespace DeadlockOverlay {
         public string SavedPath;
         public static MatchSummary Capture(MatchState state,string reason){
             return new MatchSummary {MatchId=state.MatchId,Reason=reason,WinningTeam=state.WinningTeam,DurationSeconds=state.DurationSeconds,Captured=DateTime.UtcNow,Fresh=state.Healthy&&state.Connected(DateTime.UtcNow)&&state.Players.Values.All(p=>(DateTime.UtcNow-p.Updated).TotalSeconds<15),
-                Players=state.Players.Values.Select(p=>new Player{Slot=p.Slot,Team=p.Team,Hero=p.Hero,Name=p.Name,HeroName=p.HeroName,Damage=p.Damage,ObjectDamage=p.ObjectDamage,Healing=p.Healing,Kills=p.Kills,Deaths=p.Deaths,Assists=p.Assists,Souls=p.Souls,UnspentSouls=p.UnspentSouls,Updated=p.Updated}).ToArray()};
+                Players=state.Players.Values.Select(p=>new Player{SteamId=p.SteamId,Slot=p.Slot,Team=p.Team,Hero=p.Hero,Name=p.Name,HeroName=p.HeroName,Damage=p.Damage,ObjectDamage=p.ObjectDamage,Healing=p.Healing,Kills=p.Kills,Deaths=p.Deaths,Assists=p.Assists,Souls=p.Souls,UnspentSouls=p.UnspentSouls,Updated=p.Updated}).ToArray()};
         }
         public ImpactRow[] Rank(){return ImpactProcessor.Rank(Players);}
         public void Save(){

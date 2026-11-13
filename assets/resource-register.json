@@ -691,6 +691,102 @@
     "included_in": "0.12.0"
   },
   {
+    "file": "local-art/hero-1.png",
+    "source": "https://media.githubusercontent.com/media/0xThiagoAmaral/deadlock-open-assets/main/images/deadlock/heroes_card/infernus.png",
+    "owner": "Valve Corporation; Lovely credited for Graphical Library preparation where applicable",
+    "redistribute": false,
+    "reason": "Local evaluation only; redistribution rights unconfirmed",
+    "sha256": "251aeffe7a3a00d4547ae03d548fb8a92dafbfda4d0f0e1285ec203a480a54b4"
+  },
+  {
+    "file": "local-art/hero-10.png",
+    "source": "https://media.githubusercontent.com/media/0xThiagoAmaral/deadlock-open-assets/main/images/deadlock/heroes_card/paradox.png",
+    "owner": "Valve Corporation; Lovely credited for Graphical Library preparation where applicable",
+    "redistribute": false,
+    "reason": "Local evaluation only; redistribution rights unconfirmed",
+    "sha256": "acbee917acbe7b9ea7d9bee584f0b4853b59dd09a6571f3bb503faeed05ccea6"
+  },
+  {
+    "file": "local-art/hero-11.png",
+    "source": "https://media.githubusercontent.com/media/0xThiagoAmaral/deadlock-open-assets/main/images/deadlock/heroes_card/dynamo.png",
+    "owner": "Valve Corporation; Lovely credited for Graphical Library preparation where applicable",
+    "redistribute": false,
+    "reason": "Local evaluation only; redistribution rights unconfirmed",
+    "sha256": "d6b010b4bfeae6dff8778de9fd24ae55217b73934f174f483b8913d105af59c2"
+  },
+  {
+    "file": "local-art/hero-12.png",
+    "source": "https://media.githubusercontent.com/media/0xThiagoAmaral/deadlock-open-assets/main/images/deadlock/heroes_card/kelvin.png",
+    "owner": "Valve Corporation; Lovely credited for Graphical Library preparation where applicable",
+    "redistribute": false,
+    "reason": "Local evaluation only; redistribution rights unconfirmed",
+    "sha256": "966eef63de2bcfa693b5857e94d2eec2d629b2ba743d1edc81928ba5bb6a4aee"
+  },
+  {
+    "file": "local-art/hero-13.png",
+    "source": "https://media.githubusercontent.com/media/0xThiagoAmaral/deadlock-open-assets/main/images/deadlock/heroes_card/haze.png",
+    "owner": "Valve Corporation; Lovely credited for Graphical Library preparation where applicable",
+    "redistribute": false,
+    "reason": "Local evaluation only; redistribution rights unconfirmed",
+    "sha256": "41f1c1ce69932db3b89c3e553d57b7aefd28f5334cd007387922410f2987033e"
+  },
+  {
+    "file": "local-art/hero-14.png",
+    "source": "https://media.githubusercontent.com/media/0xThiagoAmaral/deadlock-open-assets/main/images/deadlock/heroes_card/holliday.png",
+    "owner": "Valve Corporation; Lovely credited for Graphical Library preparation where applicable",
+    "redistribute": false,
+    "reason": "Local evaluation only; redistribution rights unconfirmed",
+    "sha256": "ce48644df4e221b6bd1944778ef0e1023ebd9d72d89d1cd97fd73a302bf06c16"
+  },
+  {
+    "file": "local-art/hero-15.png",
+    "source": "https://media.githubusercontent.com/media/0xThiagoAmaral/deadlock-open-assets/main/images/deadlock/heroes_card/bebop.png",
+    "owner": "Valve Corporation; Lovely credited for Graphical Library preparation where applicable",
+    "redistribute": false,
+    "reason": "Local evaluation only; redistribution rights unconfirmed",
+    "sha256": "7a0fb703270b931d5a17ca8a3ef13917fff8850715bf63969807f0d85f54c9f5"
+  },
+  {
+    "file": "local-art/hero-19.png",
+    "source": "https://media.githubusercontent.com/media/0xThiagoAmaral/deadlock-open-assets/main/images/deadlock/heroes_card/shiv.png",
+    "owner": "Valve Corporation; Lovely credited for Graphical Library preparation where applicable",
+    "redistribute": false,
+    "reason": "Local evaluation only; redistribution rights unconfirmed",
+    "sha256": "77cd59c2338d174a9495d0ed555cde5c8108cfd6ae397e33390e9fde26d0d7cc"
+  },
+  {
+    "file": "local-art/hero-25.png",
+    "source": "https://media.githubusercontent.com/media/0xThiagoAmaral/deadlock-open-assets/main/images/deadlock/heroes_card/warden.png",
+    "owner": "Valve Corporation; Lovely credited for Graphical Library preparation where applicable",
+    "redistribute": false,
+    "reason": "Local evaluation only; redistribution rights unconfirmed",
+    "sha256": "6d5c2feb0fba99474ce0a11c33e868673deec68725733415bebfad66e514fb79"
+  },
+  {
+    "file": "local-art/hero-63.png",
+    "source": "https://drive.google.com/file/d/1r94IYEhPNXpiWqmSUIRmYFpPbUpjqFuV/view",
+    "owner": "Valve Corporation; Lovely credited for Graphical Library preparation where applicable",
+    "redistribute": false,
+    "reason": "Local evaluation only; redistribution rights unconfirmed",
+    "sha256": "e005cc02bb2a12b00a63d6012824e560c3b952e7d0233ed325872517873829be"
+  },
+  {
+    "file": "local-art/hero-65.png",
+    "source": "https://media.githubusercontent.com/media/0xThiagoAmaral/deadlock-open-assets/main/images/deadlock/heroes_card/venator.png",
+    "owner": "Valve Corporation; Lovely credited for Graphical Library preparation where applicable",
+    "redistribute": false,
+    "reason": "Local evaluation only; redistribution rights unconfirmed",
+    "sha256": "db5c396efe95b0e8e892143d77eba739bcbd342990c5c557e33d0c3c95af4e2c"
+  },
+  {
+    "file": "local-art/location.png",
+    "source": "https://drive.google.com/file/d/1DGkb2vDbl9icIixwvwEEcD2vLCv_J3KD/view",
+    "owner": "Valve Corporation; Lovely credited for Graphical Library preparation where applicable",
+    "redistribute": false,
+    "reason": "Local evaluation only; redistribution rights unconfirmed",
+    "sha256": "12b098db0dd5e45e71ec3d4b7bb13b382a76c1e88c674e555998679fb8161157"
+  },
+  {
     "file": "local-art/midboss.png",
     "source": "https://github.com/0xThiagoAmaral/deadlock-open-assets/blob/main/images/deadlock/ui/minimap/super_neutral_marker.png",
     "owner": "Valve Corporation; Lovely credited for Graphical Library preparation where applicable",
@@ -698,6 +794,22 @@
     "reason": "Local evaluation only; redistribution rights unconfirmed",
     "sha256": "acd7bf26a96bd6fd8eee9d181afcbbac62f73f063bd8e29a89e4eb5a8ab9eacf",
     "included_in": "0.12.0"
+  },
+  {
+    "file": "local-art/patron-2.png",
+    "source": "https://github.com/0xThiagoAmaral/deadlock-open-assets/blob/main/images/deadlock/ui/hud/objectives/team1_patron_logo.png",
+    "owner": "Valve Corporation; Lovely credited for Graphical Library preparation where applicable",
+    "redistribute": false,
+    "reason": "Local evaluation only; redistribution rights unconfirmed",
+    "sha256": "d2914b835e201ee1cb73e7dcbfcbd4391dfedc61b3caec3cf0bf55e9368d2f01"
+  },
+  {
+    "file": "local-art/patron-3.png",
+    "source": "https://github.com/0xThiagoAmaral/deadlock-open-assets/blob/main/images/deadlock/ui/hud/objectives/team2_patron_logo.png",
+    "owner": "Valve Corporation; Lovely credited for Graphical Library preparation where applicable",
+    "redistribute": false,
+    "reason": "Local evaluation only; redistribution rights unconfirmed",
+    "sha256": "141e181b55ad4d086ec8827234fdb87c8adc1737d20ba383b5cf995a3e1be21c"
   },
   {
     "file": "companion.ico",

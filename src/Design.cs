@@ -9,7 +9,7 @@ namespace DeadlockOverlay {
   readonly Dictionary<string,Image> images=new Dictionary<string,Image>();
   int revision;
   public Image Get(string name){if(revision!=AssetLibrary.Revision){Dispose();revision=AssetLibrary.Revision;}Image found;if(images.TryGetValue(name,out found))return found;
-   string path=name.StartsWith("team-emblem-")?Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"assets","ui","patron-"+name.Substring(12)+".png"):AssetLibrary.Resolve(Path.Combine("local-art",name+".png"));
+   string path=name.StartsWith("team-emblem-")?AssetLibrary.Resolve(Path.Combine("ui","patron-"+name.Substring(12)+".png")):AssetLibrary.Resolve(Path.Combine("local-art",name+".png"));
    try{if(File.Exists(path))using(var original=Image.FromFile(path)){int limit=name=="background"||name=="location"?1600:name.StartsWith("hero-")?700:160;double factor=Math.Min(1,limit/(double)Math.Max(original.Width,original.Height));found=new Bitmap(original,Math.Max(1,(int)(original.Width*factor)),Math.Max(1,(int)(original.Height*factor)));}}catch{found=null;}
    images[name]=found;return found;
   }

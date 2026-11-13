@@ -15,7 +15,7 @@ Get-ChildItem assets -Filter *.png | Copy-Item -Destination dist\assets -Force
 Copy-Item assets\sources.json dist\assets -Force
 Copy-Item assets\companion.ico dist\assets -Force
 if(Test-Path assets\resource-register.json){Copy-Item assets\resource-register.json dist\assets -Force}
-if(Test-Path assets\local-art){New-Item -ItemType Directory -Force dist\assets\local-art | Out-Null;Copy-Item assets\local-art\*.png dist\assets\local-art -Force}
+if(Test-Path assets\local-art){New-Item -ItemType Directory -Force dist\assets\local-art | Out-Null;Get-ChildItem assets/local-art -Filter *.png | Copy-Item -Destination dist/assets/local-art -Force}
 Copy-Item src\DeadlockHelper.exe.config dist -Force
 Copy-Item README.md dist\README.md -Force -ErrorAction SilentlyContinue
 Copy-Item LICENSE dist\LICENSE -Force
@@ -24,4 +24,4 @@ Copy-Item docs\HELP.md,docs\PRIVACY.md,docs\CREDITS.md dist\docs -Force
 Write-Output 'Built dist\DeadlockHelper.exe'
 
 New-Item -ItemType Directory -Force dist\assets\ui | Out-Null
-Copy-Item assets\ui\patron-2.png,assets\ui\patron-3.png,assets\ui\1009965641.png,assets\ui\1047818222.png dist\assets\ui -Force
+foreach($name in @('patron-2.png','patron-3.png','1009965641.png','1047818222.png')){if(Test-Path (Join-Path assets/ui $name)){Copy-Item (Join-Path assets/ui $name) dist/assets/ui -Force}}

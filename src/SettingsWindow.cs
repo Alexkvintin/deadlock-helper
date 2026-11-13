@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -8,6 +9,8 @@ namespace DeadlockOverlay {
         public event Action<long> ReconnectRequested;
         public event Action<long> ViewMatchRequested;
         public event Action EndSessionRequested;
+        public readonly ScoutView Scout=new ScoutView();
+        readonly System.Collections.Generic.List<Action> scoutTranslations=new System.Collections.Generic.List<Action>();
         readonly Settings settings;
         readonly Action changed;
         readonly Action<bool> demo;
@@ -15,16 +18,18 @@ namespace DeadlockOverlay {
         CheckBox demoCheck,layoutCheck;
         protected override bool ShowWithoutActivation{get{return true;}}
         readonly Panel pageHost=new Panel();
-        readonly SettingsPage[] pages=new SettingsPage[6];
+        readonly SettingsPage[] pages=new SettingsPage[8];
         bool starting=true; int page=0,selectedPage=0;
         readonly FlowLayoutPanel navigation=new FlowLayoutPanel();
         readonly Label pageTitle=new Label();
+        readonly Panel header=new Panel();
         OverlayPreview preview;readonly System.Collections.Generic.Dictionary<int,CheckBox> partChecks=new System.Collections.Generic.Dictionary<int,CheckBox>();
         readonly ArtCache art=new ArtCache();Bitmap background;int backgroundRevision;
-        string[] PageNames{get{return new[]{L.Choose("General","Общие"),L.Choose("Overlay","Оверлей"),L.Choose("Statistics","Статистика"),L.Choose("Appearance","Внешний вид"),L.Choose("Hotkeys","Горячие клавиши"),L.Choose("About","О программе")};}}
+        string[] PageNames{get{return new[]{L.Choose("General","Общие"),L.Choose("Overlay","Оверлей"),L.Choose("Statistics","Статистика"),L.Choose("Appearance","Внешний вид"),L.Choose("Hotkeys","Горячие клавиши"),L.Choose("About","О программе"),"Scout",L.Choose("Scout Settings","Настройки Scout")};}}
         void Add(Control c){pages[page].AddSetting(c);}
-        public void SelectPage(int index){if(index==3)index=1;if(index<0||index>=pages.Length)return;SuspendLayout();selectedPage=index;pageHost.SuspendLayout();for(int i=0;i<pages.Length;i++)pages[i].Visible=i==index;pages[index].BringToFront();pages[index].PerformLayout();pageHost.ResumeLayout(true);pageHost.Invalidate(true);pageTitle.Text=PageNames[index];int n=0;foreach(Control c in navigation.Controls){c.Text=PageNames[n];c.BackColor=n++==index?Color.FromArgb(27,64,61):Theme.Background;}if(preview!=null){preview.Visible=index==1;preview.Width=Math.Max(360,Math.Min(700,ClientSize.Width/2));preview.Invalidate();}ResumeLayout(true);}
-        protected override void OnShown(EventArgs e){base.OnShown(e);Design.Fit(this);}
+        public void SelectPage(int index){if(index==3)index=1;if(index<0||index>=pages.Length)return;SuspendLayout();selectedPage=index;header.Visible=index!=6;pageTitle.Visible=index!=6;pageHost.SuspendLayout();for(int i=0;i<pages.Length;i++)pages[i].Visible=i==index;pages[index].BringToFront();pages[index].PerformLayout();pageHost.ResumeLayout(true);pageHost.Invalidate(true);pageTitle.Text=PageNames[index];int n=0;foreach(Control c in navigation.Controls){c.Text=PageNames[n];c.BackColor=n++==index?Color.FromArgb(27,64,61):Theme.Background;}if(preview!=null){preview.Visible=index==1;preview.Width=Math.Max(360,Math.Min(700,ClientSize.Width/2));preview.Invalidate();}ResumeLayout(true);FitNavigation();}
+        void FitNavigation(){if(navigation==null)return;float dpi=DeviceDpi/96f;var buttons=navigation.Controls.Cast<Control>().Where(c=>c.Visible).ToArray();if(buttons.Length==0)return;int available=Math.Max(1,navigation.ClientSize.Height-navigation.Padding.Vertical);int height=Math.Min((int)(46*dpi),Math.Max((int)(29*dpi),available/buttons.Length-(int)(4*dpi)));foreach(var button in buttons){button.Height=height;button.Margin=new Padding(0,0,0,(int)(4*dpi));}}
+        protected override void OnShown(EventArgs e){base.OnShown(e);Design.Fit(this);FitNavigation();}
         protected override void Dispose(bool disposing){if(disposing){art.Dispose();if(background!=null)background.Dispose();}base.Dispose(disposing);}
         protected override void OnPaintBackground(PaintEventArgs e){
             if(ClientSize.Width<1||ClientSize.Height<1)return;
@@ -35,12 +40,12 @@ namespace DeadlockOverlay {
         public SettingsWindow(Settings settings,Action changed,Action<bool> demo) {
             this.settings=settings; this.changed=changed; this.demo=demo;
             L.Language=settings.Language;
-            Text="Deadlock Helper by kvintin · v1.0.1"; Size=new Size(1320,880); MinimumSize=new Size(860,560); Icon=Design.AppIcon; StartPosition=FormStartPosition.CenterScreen;
+            Text="Deadlock Helper by kvintin · v1.1.0-beta.1"; Size=new Size(1320,880); MinimumSize=new Size(860,560); Icon=Design.AppIcon; StartPosition=FormStartPosition.CenterScreen;
             SetStyle(ControlStyles.ResizeRedraw|ControlStyles.OptimizedDoubleBuffer,true);BackColor=Theme.Background; ForeColor=Theme.Ink; Font=new Font("Bahnschrift",11f);
             AutoScaleDimensions=new SizeF(96,96); AutoScaleMode=AutoScaleMode.Dpi;
             pageHost.Dock=DockStyle.Fill;pageHost.BackColor=Color.FromArgb(16,24,29);
             for(int i=0;i<pages.Length;i++){pages[i]=new SettingsPage{Dock=DockStyle.Fill,Visible=false};pageHost.Controls.Add(pages[i]);}
-            var header=new Panel{Dock=DockStyle.Top,Height=86,BackColor=Color.Transparent};
+            header.Dock=DockStyle.Top;header.Height=86;header.BackColor=Color.Transparent;
             var title=new Label{Text="DEADLOCK HELPER",Font=new Font("Palatino Linotype",23,FontStyle.Regular),ForeColor=Theme.Gold,AutoSize=true,Location=new Point(26,18),BackColor=Color.Transparent};header.Controls.Add(title);
             header.Controls.Add(new Label{Text="by kvintin",Font=new Font("Bahnschrift",10),ForeColor=Theme.Green,AutoSize=true,Location=new Point(29,54),BackColor=Color.Transparent});
             navigation.Dock=DockStyle.Left;navigation.Width=185;navigation.FlowDirection=FlowDirection.TopDown;navigation.WrapContents=false;navigation.Padding=new Padding(12,18,10,0);navigation.BackColor=Theme.Background;
@@ -48,14 +53,14 @@ namespace DeadlockOverlay {
             preview=new OverlayPreview(settings){Dock=DockStyle.Right,Width=530};
             pageTitle.BackColor=Color.FromArgb(16,24,29);pageTitle.Dock=DockStyle.Top;pageTitle.Height=62;pageTitle.Font=new Font("Bahnschrift",21,FontStyle.Regular);pageTitle.Padding=new Padding(24,18,0,0);pageTitle.ForeColor=Theme.Ink;
             var content=new Panel{Dock=DockStyle.Fill,BackColor=Color.FromArgb(16,24,29)};content.Controls.Add(pageHost);content.Controls.Add(pageTitle);Controls.Add(content);Controls.Add(preview);Controls.Add(navigation);Controls.Add(header);
-            Resize+=(a,e)=>{preview.Visible=selectedPage==1;preview.Width=Math.Max(340,Math.Min(700,ClientSize.Width/2));};
+            Resize+=(a,e)=>{FitNavigation();preview.Visible=selectedPage==1;preview.Width=Math.Max(340,Math.Min(700,ClientSize.Width/2));};
             status.AutoSize=false; status.Size=new Size(405,58); status.ForeColor=Color.FromArgb(100,220,192); Add(status);
             var language=new ScrollSafeComboBox{DropDownStyle=ComboBoxStyle.DropDownList,Width=400};language.Items.AddRange(new object[]{"English (EN)",L.T("Русский (RU)")});language.SelectedIndex=settings.Language=="ru"?1:0;
-            language.SelectedIndexChanged+=(a,b)=>{settings.Language=language.SelectedIndex==1?"ru":"en";L.Language=settings.Language;L.Apply(this);SelectPage(selectedPage);Save();};Add(language);
+            language.SelectedIndexChanged+=(a,b)=>{settings.Language=language.SelectedIndex==1?"ru":"en";L.Language=settings.Language;L.Apply(this);foreach(var translate in scoutTranslations)translate();SelectPage(selectedPage);Save();};Add(language);
             var automatic=Check(L.T("Автоматически определять активный матч"),settings.AutoMatch,v=>settings.AutoMatch=v);
             Check(L.Choose("Screen recognition (match, hero, clock)","Распознавание экрана (матч, герой, время)"),settings.ScreenRecognition,v=>settings.ScreenRecognition=v);
             Check(L.T("Показывать сводку после выхода из матча"),settings.ShowSummary,v=>settings.ShowSummary=v);
-            page=1;Section(L.Choose("LAYOUT & APPEARANCE","РАСПОЛОЖЕНИЕ И ОФОРМЛЕНИЕ"));LayoutControls();
+            page=1;ScoutCheck("Show player ranks in overlay","Ранги игроков в оверлее",settings.ShowRanks,v=>settings.ShowRanks=v);Section(L.Choose("LAYOUT & APPEARANCE","РАСПОЛОЖЕНИЕ И ОФОРМЛЕНИЕ"));LayoutControls();
             Check(L.Choose("Keep panels from overlapping","Не допускать пересечения панелей"),settings.AvoidOverlap,v=>settings.AvoidOverlap=v);
             PartCheck(0);PartCheck(1);
             Section(L.T("ПОДСКАЗКИ ПО ПРЕДМЕТАМ"));
@@ -90,7 +95,7 @@ namespace DeadlockOverlay {
             for(int i=0;i<6;i++){int part=i;Add(new Label{Text=LayoutHandle.Names[i],AutoSize=true});var bind=new ScrollSafeComboBox{DropDownStyle=ComboBoxStyle.DropDownList};bind.Items.Add(L.Choose("Not assigned","Не назначено"));for(int n=1;n<=12;n++)bind.Items.Add("Ctrl + Shift + F"+n);bind.SelectedIndex=settings.PartHotkeys[i]==0?0:settings.PartHotkeys[i]-111;bind.SelectedIndexChanged+=(a,b)=>{int key=bind.SelectedIndex==0?0:bind.SelectedIndex+111;bool duplicate=key!=0&&(key==settings.Hotkey||Array.FindIndex(settings.PartHotkeys,k=>k==key)!=-1&&settings.PartHotkeys[part]!=key);if(duplicate){bind.SelectedIndex=settings.PartHotkeys[part]==0?0:settings.PartHotkeys[part]-111;return;}settings.PartHotkeys[part]=key;Save();};Add(bind);}
             Add(new Label{Text=L.Choose("Already assigned shortcuts cannot be reused. Each shortcut toggles only its own panel.","Занятое сочетание нельзя назначить повторно. Каждый бинд переключает только свой блок."),AutoSize=true});
             page=0;Check(L.T("Запускать с Windows (в трей)"),settings.Autostart,v=>{if(!UiReview.Active)SettingsManager.SetAutostart(v);settings.Autostart=v;});
-            page=5;Section("DEADLOCK HELPER BY KVINTIN   v1.0.1");
+            page=5;Section("DEADLOCK HELPER BY KVINTIN   v1.1.0-beta.1");
             Add(new Label{Text=L.Choose("Personal noncommercial use. Modifications, sales and redistribution require prior written permission from kvintin, subject to the license exceptions.","Личное некоммерческое использование. Изменения, продажа и распространение требуют письменного разрешения kvintin с учётом исключений лицензии."),AutoSize=true});
             Button(L.Choose("Read the license","Условия использования"),()=>Process.Start("https://github.com/Alexkvintin/deadlock-helper/blob/main/LICENSE"));
             Section(L.Choose("FEEDBACK & IDEAS","ОТЗЫВЫ И ПОЖЕЛАНИЯ"));
@@ -105,8 +110,30 @@ namespace DeadlockOverlay {
             var note=new Label { Text=L.T("Закрытие окна сворачивает приложение в трей.\nTab и Alt+Tab не скрывают панели.\nПосле настройки снимите галочку перемещения."),AutoSize=true,ForeColor=Color.FromArgb(146,156,170),Margin=new Padding(0,12,0,12) }; Add(note);
             FormClosing+=(a,e)=>{if(e.CloseReason==CloseReason.UserClosing){e.Cancel=true;EndLayoutEdit();Hide();}};
             Resize+=(a,e)=>{if(WindowState==FormWindowState.Minimized)EndLayoutEdit();};
+            Scout.Dock=DockStyle.Fill;pages[6].Controls.Add(Scout);Scout.BringToFront();
+            ScoutSettings();
             Theme.Skin(pageHost);Theme.Skin(navigation);SelectPage(0);starting=false;
         }
+        void ScoutSettings(){
+            page=7;Section("PLAYER SCOUT");
+            ScoutCheck("Enable Scout","Включить Scout",settings.Scout.Enabled,v=>settings.Scout.Enabled=v);
+            ScoutCheck("Public API analysis (sends player Account IDs)","Анализ через публичный API (передаёт Account ID игроков)",settings.Scout.Network,v=>settings.Scout.Network=v);
+            ScoutCheck("Open on another monitor without focus","Открывать на другом мониторе без фокуса",settings.Scout.AutoOpen,v=>settings.Scout.AutoOpen=v);
+            var monitors=new ScrollSafeComboBox{DropDownStyle=ComboBoxStyle.DropDownList};monitors.Items.Add(L.Choose("Automatic additional monitor","Автоматически другой монитор"));foreach(var screen in Screen.AllScreens)monitors.Items.Add(screen.DeviceName);monitors.SelectedIndex=Math.Max(0,monitors.Items.IndexOf(settings.Scout.Monitor));scoutTranslations.Add(()=>monitors.Items[0]=L.Choose("Automatic additional monitor","Автоматически другой монитор"));monitors.SelectedIndexChanged+=(a,e)=>{settings.Scout.Monitor=monitors.SelectedIndex==0?"":monitors.SelectedItem.ToString();Save();};Add(monitors);
+            ScoutNumber("Ranked sample (20–30)","Рейтинговая выборка (20–30)",20,30,settings.Scout.Sample,v=>settings.Scout.Sample=v);
+            ScoutNumber("SMURF win rate above (%)","СМУРФ: винрейт выше (%)",50,99,settings.Scout.SmurfPercent,v=>settings.Scout.SmurfPercent=v);
+            ScoutNumber("Confirmed early departures","Подтверждённые выходы",1,20,settings.Scout.Leaves,v=>settings.Scout.Leaves=v);
+            ScoutNumber("Low efficiency percentile (reserved)","Процентиль низкой эффективности (резерв)",1,40,settings.Scout.LowPercentile,v=>settings.Scout.LowPercentile=v);
+            ScoutNumber("Low efficiency matches (reserved)","Матчей с низкой эффективностью (резерв)",10,20,settings.Scout.LowGames,v=>settings.Scout.LowGames=v);
+            ScoutCheck("Show party groups","Показывать пати",settings.Scout.ShowParty,v=>settings.Scout.ShowParty=v);
+            ScoutCheck("Include likely groups (dashed)","Вероятные пати (пунктир)",settings.Scout.ShowLikelyParty,v=>settings.Scout.ShowLikelyParty=v);
+            ScoutCheck("Party marks in overlay","Метки пати в оверлее",settings.Scout.OverlayParty,v=>settings.Scout.OverlayParty=v);
+            ScoutNumber("Party highlight intensity (%)","Интенсивность выделения пати (%)",15,100,settings.Scout.PartyIntensity,v=>settings.Scout.PartyIntensity=v);
+            string[] keys={"smurf","leaver","main","new","streak","low","high"};string[] en={"SMURF","LEAVER","MAIN","NEW TO HERO","WIN STREAK","LOW SKILL (awaiting validation)","HIGH SKILL (awaiting validation)"};string[] ru={"СМУРФ","РУИНЕР","МЕЙНЕР","НОВИЧОК","ВИНСТРИК","ЛОУСКИЛЛ (ожидает проверки)","ХАЙСКИЛЛ (ожидает проверки)"};
+            for(int i=0;i<keys.Length;i++){string key=keys[i];ScoutCheck(en[i],ru[i],!(settings.Scout.DisabledTags??"").Split(',').Contains(key),v=>{var list=(settings.Scout.DisabledTags??"").Split(',').Where(x=>x.Length>0&&x!=key).ToList();if(!v)list.Add(key);settings.Scout.DisabledTags=string.Join(",",list);});}
+        }
+        void ScoutNumber(string en,string ru,int min,int max,int value,Action<int> set){var label=new Label{Text=L.Choose(en,ru),AutoSize=true};Add(label);scoutTranslations.Add(()=>label.Text=L.Choose(en,ru));var number=new NumericUpDown{Minimum=min,Maximum=max,Value=Math.Max(min,Math.Min(max,value))};number.ValueChanged+=(a,e)=>{set((int)number.Value);Save();};Add(number);}
+        void ScoutCheck(string en,string ru,bool value,Action<bool> set){var c=Check(L.Choose(en,ru),value,set);scoutTranslations.Add(()=>c.Text=L.Choose(en,ru));}
         void PartCheck(int part){partChecks[part]=Check(L.Choose("Show ","Показывать ")+LayoutHandle.Names[part],settings.ShowHudPart(part),value=>{if(settings.ShowHudPart(part)!=value)settings.TogglePart(part);});}
         public void SyncVisibility(){bool was=starting;starting=true;foreach(var pair in partChecks)pair.Value.Checked=settings.ShowHudPart(pair.Key);starting=was;if(preview!=null)preview.Invalidate();}
         public void SetStatus(string text) { if(status.Text!=text) status.Text=L.ToLanguage(text); }
