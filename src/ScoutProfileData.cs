@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 namespace DeadlockOverlay {
  public sealed class ReviewSample {public int Second;public long? Souls,Damage,Objectives,Healing;}
- public sealed class ReviewPurchase {public int Second;public long Item;public int? Sold;public long? UpgradeId;}
+ public sealed class ReviewPurchase {public int Second;public long Item;public int? Sold;public long? UpgradeId,UpgradeInfo,Flags,ImbuedAbilityId;}
  public sealed class ReviewEvent {public int Second,Hero;public string Kind="";}
  public sealed class ScoutMatchDetail {
   public const int CurrentVersion=4;
@@ -33,7 +33,7 @@ namespace DeadlockOverlay {
    result.Timeline=snapshots.Take(599).Concat(snapshots.Length>599?snapshots.Skip(snapshots.Length-1):new Dictionary<string,object>[0]).Select(s=>new ReviewSample{Second=(int)Json.Number(s,"time_stamp_s").Value,Souls=Json.Number(s,"net_worth"),Damage=Json.Number(s,"player_damage"),Objectives=Json.Number(s,"boss_damage"),Healing=Json.Number(s,"teammate_healing")}).ToArray();
    result.Purchases=(Json.Get(player,"items") as object[]??new object[0]).Select(Json.Obj).Where(s=>InRange(Json.Number(s,"game_time_s"),result.Seconds)&&Json.Number(s,"item_id")>0&&Json.Number(s,"item_id")<=uint.MaxValue).Select(s=>{
     int second=(int)Json.Number(s,"game_time_s").Value;
-    return new ReviewPurchase{Second=second,Item=Json.Number(s,"item_id").Value,Sold=RecordedSale(Json.Number(s,"sold_time_s"),second,result.Seconds),UpgradeId=Json.Number(s,"upgrade_id")};
+    return new ReviewPurchase{Second=second,Item=Json.Number(s,"item_id").Value,Sold=RecordedSale(Json.Number(s,"sold_time_s"),second,result.Seconds),UpgradeId=Json.Number(s,"upgrade_id"),UpgradeInfo=Json.Number(s,"upgrade_info"),Flags=Json.Number(s,"flags"),ImbuedAbilityId=Json.Number(s,"imbued_ability_id")};
    }).OrderBy(s=>s.Second).Take(256).ToArray();
    var last=snapshots.LastOrDefault();if(last==null)return result;
    result.LastSecond=(int)(Json.Number(last,"time_stamp_s")??0);
@@ -70,11 +70,20 @@ namespace DeadlockOverlay {
    if(recent.Length==20&&h.Length>=14)lines.Add(ally==true?L.Choose("Practiced hero: coordinate around their familiar abilities; this is not a guarantee of performance.","Привычный герой: согласуйте действия вокруг его способностей; это не гарантия результата."):L.Choose("Hero specialist. Against: respect demonstrated familiarity; do not assume unfamiliarity with abilities. Ally: this is a practiced pick, not a guarantee of performance.","Специалист по герою. Против: учитывайте опыт владения способностями. Союзник: привычный выбор, но не гарантия результата."));
    var valid=h.Where(m=>m.Duration>0&&m.Deaths.HasValue).ToArray();
    if(valid.Length>=5)lines.Add(L.Choose("Recorded deaths per 10 minutes: ","Зафиксированные смерти за 10 минут: ")+N(valid.Sum(m=>m.Deaths.Value)*600.0/valid.Sum(m=>m.Duration.Value))+" (n="+valid.Length+"). "+L.Choose("This alone does not establish aggressive or cautious play.","Само по себе это не доказывает агрессивный или осторожный стиль."));
+   var combat=h.Where(m=>m.Duration>0&&m.Kills.HasValue&&m.Assists.HasValue&&m.Deaths.HasValue).ToArray();
+   if(combat.Length>=5){double contribution=combat.Sum(m=>m.Kills.Value+m.Assists.Value)*600.0/combat.Sum(m=>m.Duration.Value);lines.Add(L.Choose("Recorded kills + assists per 10 min: ","Убийства + помощи за 10 мин: ")+N(contribution)+L.Choose("; aggregate KDA: ","; общий KDA: ")+N((combat.Sum(m=>m.Kills.Value)+combat.Sum(m=>m.Assists.Value))/(double)Math.Max(1,combat.Sum(m=>m.Deaths.Value)))+" (n="+combat.Length+"). "+L.Choose("These counts do not measure teamfight participation.","Эти числа не измеряют участие в командных сражениях."));}
+   var outcomes=h.Where(m=>m.Won.HasValue).ToArray();if(outcomes.Length>=5)lines.Add(L.Choose("Current-hero recent results: ","Последние результаты на герое: ")+outcomes.Count(m=>m.Won==true)+"/"+outcomes.Length+L.Choose(" wins; avoid treating this as a prediction."," побед; это не прогноз исхода матча."));
    var support=h.Select(m=>detail(m.Id)).Where(d=>d!=null&&d.Available&&d.Hero==hero&&d.TeamHealing.HasValue&&d.Seconds>0).ToArray();
    if(support.Length>=5&&support.Count(d=>d.TeamHealing>0)>=Math.Ceiling(support.Length*.6))lines.Add(L.Choose("Repeated ally healing: ","Регулярное лечение союзников: ")+N(support.Sum(d=>d.TeamHealing.Value)*60.0/support.Sum(d=>d.Seconds))+L.Choose("/min. Against: check the current healing build before choosing anti-heal. Ally: consider staying within healing reach when the current build supports it.","/мин. Против: проверьте текущую сборку на лечение перед выбором антихила. Союзник: учитывайте радиус лечения, если текущая сборка его поддерживает."));
    var detailed=h.Select(m=>detail(m.Id)).Where(d=>d!=null&&d.Available&&d.Hero==hero&&d.Seconds>0&&d.Damage.HasValue&&d.Objectives.HasValue).ToArray();
    if(detailed.Length>=5)lines.Add(L.Choose("Recorded per minute: ","Записано за минуту: ")+N(detailed.Sum(d=>d.Damage.Value)*60.0/detailed.Sum(d=>d.Seconds))+L.Choose(" hero damage; "," урона героям; ")+N(detailed.Sum(d=>d.Objectives.Value)*60.0/detailed.Sum(d=>d.Seconds))+L.Choose(" objective damage. This describes contribution, not initiation or positioning."," урона строениям. Это вклад, а не доказательство инициации или позиционирования."));
    var economy=h.Where(m=>m.Souls.HasValue&&m.Duration>0).ToArray();if(economy.Length>=10){double newer=economy.Take(5).Average(m=>m.Souls.Value*60.0/m.Duration.Value),older=economy.Skip(5).Take(5).Average(m=>m.Souls.Value*60.0/m.Duration.Value);lines.Add(L.Choose("Net worth/min, latest five vs previous five: ","Ценность героя/мин, последние пять против предыдущих пяти: ")+N(newer)+" / "+N(older)+L.Choose(". Check their current items before committing to a fight; past economy does not establish their present advantage.",". Проверьте текущие предметы перед боем; прошлая экономика не доказывает преимущество сейчас."));}
+   // Compare chronological windows on the same hero and mode, without assigning global style/skill labels.
+   var modes=h.GroupBy(m=>m.Mode).OrderByDescending(g=>g.Count()).FirstOrDefault();if(modes!=null&&modes.Count()>=10){var sample=modes.Take(10).ToArray();
+    var obj=sample.Select(m=>detail(m.Id)).ToArray();if(obj.All(d=>d!=null&&d.Available&&d.Hero==hero&&d.Seconds>0&&d.Objectives.HasValue)){
+     double newer=obj.Take(5).Sum(d=>d.Objectives.Value)*60.0/obj.Take(5).Sum(d=>d.Seconds),older=obj.Skip(5).Sum(d=>d.Objectives.Value)*60.0/obj.Skip(5).Sum(d=>d.Seconds);
+     lines.Add(L.Choose("Objective damage/min, latest five vs previous five (same mode): ","Урон строениям/мин, последние пять против предыдущих пяти (тот же режим): ")+N(newer)+" / "+N(older)+". "+(newer>older*1.25&&newer>0?(ally==true?L.Choose("Recent objective contribution increased; consider coordinating objective attempts.","Недавний вклад по строениям вырос; согласуйте действия по целям."):ally==false?L.Choose("Recent objective contribution increased; watch objective pressure.","Недавний вклад по строениям вырос; учитывайте давление на цели."):L.Choose("Recent objective contribution increased.","Недавний вклад по строениям вырос.")):L.Choose("This is a personal historical comparison.","Это личное историческое сравнение.")));}
+   }
    return string.Join(" ",lines);
   }
   public static double? Metric(ScoutMatch m,ScoutMatchDetail detail,int metric){switch(metric){case 0:return Ratio(m);case 1:return m.Souls;case 2:return m.Won.HasValue?(double?)(m.Won.Value?1:0):null;case 3:return RankStep(m.Badge);case 4:return detail!=null&&detail.Available?detail.Damage:null;case 5:return detail!=null&&detail.Available?detail.Objectives:null;case 6:return detail!=null&&detail.Available?detail.Healing:null;default:return null;}}

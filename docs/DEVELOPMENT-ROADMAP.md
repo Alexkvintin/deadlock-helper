@@ -28,7 +28,7 @@
 ## Next priorities
 
 1. P0 Scout switching: completed in the follow-up below. Keep legacy export fixtures independent of the real runtime cache in subsequent test maintenance.
-2. P1: investigate final inventory using the already saved public metadata and authoritative item upgrade/removal definitions. The observed `upgrade_id`, `upgrade_info`, `flags` and `sold_time_s` do not by themselves establish final equipped inventory. Do not infer inventory if event semantics remain ambiguous. Build interaction and role analysis only from verified observed data.
+2. P1: final inventory research checkpoint completed in Live Match Intelligence. Authoritative upgrade/removal semantics or a verified final inventory source remain required. The visible history is improved without inventing equipped items. Build interaction and role analysis only from verified observed data.
 3. P1: physical FHD/1440p multi-monitor/DPI and controlled gameplay frame-time measurement when a suitable session is available. No new polling or capture mechanism is needed for the report improvements.
 4. Deferred: patch-aware LOW/HIGH calibration requires independent verified reference data and acceptance criteria in `docs/PERFORMANCE-CALIBRATION.md`. Current party membership also requires an authoritative source. Keep unsupported labels disabled.
 
@@ -45,4 +45,8 @@ Validation: controlled local fixtures in `ScoutSwitchTests.cs` cover rapid and s
 
 ## Resume
 
-Worktree: `G:/OwerLock/artifacts/review-data-integrity`. Latest local executable: `dist/scout-switch/DeadlockHelper.exe` (separate output because the previous `dist/DeadlockHelper.exe` was running). Run `build.ps1` when the regular output is not locked, then compile the relevant test executables in `tests` against the resulting managed assembly using the .NET Framework x64 compiler; the source workspace retains broader legacy regression fixtures. No new ZIP or GitHub release has been created.
+### Live Match Intelligence 1.2 development
+
+See [LIVE-MATCH-INTELLIGENCE.md](LIVE-MATCH-INTELLIGENCE.md) for the integrated implementation and verification. The 1.2 dev increment adds roster identity reconciliation, Ranked/spectator perspective gating, team/lane/situational recommendations, manual lane and ownership selection, Scout live synchronization, expanded tactical notes and chronological item event analysis. Remaining real checks are confirmed automatic lane evidence, physical Ranked swaps, real gameplay frame-time/DPI, authoritative inventory and calibrated style cohorts. Do not describe these as completed.
+
+Worktree: `G:/OwerLock/artifacts/review-data-integrity`. Latest local executable: `dist/live-intelligence/DeadlockHelper.exe` (`1.2.0-dev`, kept separate from the previous running build). Run `build.ps1` when the regular output is not locked, then compile the relevant test executables in `tests` against the resulting managed assembly using the .NET Framework x64 compiler; the source workspace retains broader legacy regression fixtures. No new ZIP or GitHub release has been created.
