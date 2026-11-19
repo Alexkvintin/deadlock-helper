@@ -14,6 +14,7 @@ namespace DeadlockOverlay {
         public bool ShowHiddenKing=true,ShowArchmother=true,AvoidOverlap=true;
         public void TogglePart(int part){if(part==0)ShowHiddenKing=!ShowHiddenKing;else if(part==1)ShowArchmother=!ShowArchmother;else if(part==2)ShowItems=!ShowItems;else if(part==3)ShowCrystals=!ShowCrystals;else if(part==4)ShowMidBoss=!ShowMidBoss;else if(part==5)ShowRift=!ShowRift;}
         public int AdvisorHero=0,AdvisorPhase=0;
+        public int CounterMode=0;
         public bool ShowItems=true;
         public bool ScreenRecognition=true;
         public string Language="en";
@@ -26,6 +27,7 @@ namespace DeadlockOverlay {
         public WidgetPlacement[] Layout;
         public WidgetPlacement Placement(int index){if(Layout==null||Layout.Length!=6)Layout=new[]{new WidgetPlacement(LeftX,LeftY,Scale,Opacity),new WidgetPlacement(RightX,RightY,Scale,Opacity),new WidgetPlacement(.5,.15,1,1),new WidgetPlacement(.20,.15,1,1),new WidgetPlacement(.80,.15,1,1),new WidgetPlacement(.5,.145,1,1)};if(Layout[index]==null)Layout[index]=new WidgetPlacement(.5,.2,1,1);return Layout[index];}
         public void Validate() {
+            if(CounterMode<0||CounterMode>3)CounterMode=0;
             if(Scout==null)Scout=new ScoutOptions();Scout.Validate();
             if(Language!="ru")Language="en";
             Scale=Clamp(Scale,0.6,1.8,1); Opacity=Clamp(Opacity,0.25,1,0.88);

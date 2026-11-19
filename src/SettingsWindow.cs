@@ -9,6 +9,7 @@ namespace DeadlockOverlay {
         public event Action<long> ReconnectRequested;
         public event Action<long> ViewMatchRequested;
         public event Action EndSessionRequested;
+        public event Action CounterDetailsRequested;
         public readonly ScoutView Scout=new ScoutView();
         readonly System.Collections.Generic.List<Action> scoutTranslations=new System.Collections.Generic.List<Action>();
         readonly Settings settings;
@@ -40,7 +41,7 @@ namespace DeadlockOverlay {
         public SettingsWindow(Settings settings,Action changed,Action<bool> demo) {
             this.settings=settings; this.changed=changed; this.demo=demo;
             L.Language=settings.Language;
-            Text="Deadlock Helper by kvintin · v1.1.0-beta.1"; Size=new Size(1320,880); MinimumSize=new Size(860,560); Icon=Design.AppIcon; StartPosition=FormStartPosition.CenterScreen;
+            Text="Deadlock Helper by kvintin · v1.2.0-dev"; Size=new Size(1320,880); MinimumSize=new Size(860,560); Icon=Design.AppIcon; StartPosition=FormStartPosition.CenterScreen;
             SetStyle(ControlStyles.ResizeRedraw|ControlStyles.OptimizedDoubleBuffer,true);BackColor=Theme.Background; ForeColor=Theme.Ink; Font=new Font("Bahnschrift",11f);
             AutoScaleDimensions=new SizeF(96,96); AutoScaleMode=AutoScaleMode.Dpi;
             pageHost.Dock=DockStyle.Fill;pageHost.BackColor=Color.FromArgb(16,24,29);
@@ -65,6 +66,7 @@ namespace DeadlockOverlay {
             PartCheck(0);PartCheck(1);
             Section(L.T("ПОДСКАЗКИ ПО ПРЕДМЕТАМ"));
             PartCheck(2);
+            var counterDetailsButton=Button(L.Choose("Open Counter Items / choose lane opponent","Контрпредметы / выбор соперника линии"),()=>{if(CounterDetailsRequested!=null)CounterDetailsRequested();});scoutTranslations.Add(()=>counterDetailsButton.Text=L.Choose("Open Counter Items / choose lane opponent","Контрпредметы / выбор соперника линии"));
             Add(new Label{Text=L.Choose("Recommendations follow enemy portraits. Place each map timer wherever it suits you.","Подсказки следуют за портретами противников. Каждый таймер можно разместить отдельно."),Width=400,Height=62,ForeColor=Theme.Muted});
             Section(L.T("ТАЙМЕРЫ КАРТЫ"));
             PartCheck(5);
@@ -95,7 +97,7 @@ namespace DeadlockOverlay {
             for(int i=0;i<6;i++){int part=i;Add(new Label{Text=LayoutHandle.Names[i],AutoSize=true});var bind=new ScrollSafeComboBox{DropDownStyle=ComboBoxStyle.DropDownList};bind.Items.Add(L.Choose("Not assigned","Не назначено"));for(int n=1;n<=12;n++)bind.Items.Add("Ctrl + Shift + F"+n);bind.SelectedIndex=settings.PartHotkeys[i]==0?0:settings.PartHotkeys[i]-111;bind.SelectedIndexChanged+=(a,b)=>{int key=bind.SelectedIndex==0?0:bind.SelectedIndex+111;bool duplicate=key!=0&&(key==settings.Hotkey||Array.FindIndex(settings.PartHotkeys,k=>k==key)!=-1&&settings.PartHotkeys[part]!=key);if(duplicate){bind.SelectedIndex=settings.PartHotkeys[part]==0?0:settings.PartHotkeys[part]-111;return;}settings.PartHotkeys[part]=key;Save();};Add(bind);}
             Add(new Label{Text=L.Choose("Already assigned shortcuts cannot be reused. Each shortcut toggles only its own panel.","Занятое сочетание нельзя назначить повторно. Каждый бинд переключает только свой блок."),AutoSize=true});
             page=0;Check(L.T("Запускать с Windows (в трей)"),settings.Autostart,v=>{if(!UiReview.Active)SettingsManager.SetAutostart(v);settings.Autostart=v;});
-            page=5;Section("DEADLOCK HELPER BY KVINTIN   v1.1.0-beta.1");
+            page=5;Section("DEADLOCK HELPER BY KVINTIN   v1.2.0-dev");
             Add(new Label{Text=L.Choose("Personal noncommercial use. Modifications, sales and redistribution require prior written permission from kvintin, subject to the license exceptions.","Личное некоммерческое использование. Изменения, продажа и распространение требуют письменного разрешения kvintin с учётом исключений лицензии."),AutoSize=true});
             Button(L.Choose("Read the license","Условия использования"),()=>Process.Start("https://github.com/Alexkvintin/deadlock-helper/blob/main/LICENSE"));
             Section(L.Choose("FEEDBACK & IDEAS","ОТЗЫВЫ И ПОЖЕЛАНИЯ"));
@@ -169,7 +171,7 @@ namespace DeadlockOverlay {
             EventHandler h=(a,b)=>{set((double)nx.Value/100,(double)ny.Value/100);Save();}; nx.ValueChanged+=h;ny.ValueChanged+=h;
             panel.Controls.Add(nx);panel.Controls.Add(ny);Add(panel);
         }
-        void Button(string text,Action action) { var b=new Button { Text=text,Width=400,Height=33,FlatStyle=FlatStyle.Flat,Margin=new Padding(0,5,0,0) };b.Click+=(a,e)=>{try{action();}catch(Exception ex){Log.Write(text,ex);MessageBox.Show(this,ex.Message,text);}};Add(b); }
+        Button Button(string text,Action action) { var b=new Button { Text=text,Width=400,Height=33,FlatStyle=FlatStyle.Flat,Margin=new Padding(0,5,0,0) };b.Click+=(a,e)=>{try{action();}catch(Exception ex){Log.Write(text,ex);MessageBox.Show(this,ex.Message,text);}};Add(b);return b; }
     }
 }
 

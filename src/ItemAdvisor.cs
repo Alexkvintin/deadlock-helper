@@ -10,6 +10,9 @@ namespace DeadlockOverlay {
     public sealed class ItemSuggestion {
         public long Id,Matches,Wins,Losses;
         public string Name;
+        public string Target,Why,Condition,Image;
+        public int? Cost;
+        public bool? Affordable;
         public double WinRate {get{return Wins+Losses>0?100.0*Wins/(Wins+Losses):0;}}
     }
     public sealed class Advice {

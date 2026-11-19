@@ -24,9 +24,11 @@ namespace DeadlockOverlay {
         public string Name, HeroName;
         public bool Local;
         public int? Lane;
+        public int? OriginalLane,ConfirmedLane;
         public int? LobbySlot;
         public int? HudOrder;
         public string SteamId;
+        public long AccountId{get{return PlayerInsightEngine.AccountId(SteamId);}}
         public string BridgeBuff="?";
         public bool? Rejuvenator, Rebirth;
         public long? Damage, ObjectDamage, Healing, Kills, Deaths, Assists, Souls, UnspentSouls;
@@ -44,12 +46,20 @@ namespace DeadlockOverlay {
         public int? WinningTeam;
         public long? DurationSeconds;
         public readonly Dictionary<int, Player> Players = new Dictionary<int, Player>();
+        public readonly LiveRoster Roster=new LiveRoster();
+        public Player[] KnownRoster{get{var rows=Roster.Rows;return rows.Length>0?rows:Players.Values.ToArray();}}
         public bool Active { get { return Phase == "GameInProgress"; } }
         public int? LocalTeam {
             get { var p = Players.Values.Where(x => x.Local).ToArray(); return p.Length == 1 ? (int?)p[0].Team : null; }
         }
+        public void ResolveLocalPerspective(long account,bool? sourceSpectator){
+            if(account<=0||sourceSpectator!=false)return;
+            var own=Players.Values.Where(p=>p.AccountId==account).ToArray();if(own.Length!=1)return;
+            if(Players.Values.Any(p=>p.Local&&p.AccountId!=account))return;
+            own[0].Local=true;Spectator=false;ViewedHeroId=own[0].Hero;
+        }
         public bool Connected(DateTime now) { return (now - Received).TotalSeconds < 8; }
-        public void Reset() { Players.Clear();WinningTeam=null;DurationSeconds=null; Phase="Init"; MatchId=""; Sequence=-1; Session=""; Healthy=false; Spectator=false; SourceStatus=L.T("Укажите ID просматриваемого матча"); Received=DateTime.MinValue; }
+        public void Reset() { Players.Clear();Roster.Reset();ViewedHeroId=0;WinningTeam=null;DurationSeconds=null; Phase="Init"; MatchId=""; Sequence=-1; Session=""; Healthy=false; Spectator=false; SourceStatus=L.T("Укажите ID просматриваемого матча"); Received=DateTime.MinValue; }
         public bool Apply(string json, DateTime now) {
             return Apply(Json.Obj(Json.Serializer().DeserializeObject(json)),now);
         }
@@ -61,7 +71,8 @@ namespace DeadlockOverlay {
             var game = Json.Obj(Json.Get(info,"game_info"));
             var match = Json.Obj(Json.Get(info,"match_info"));
             string phase = Json.Str(game,"phase");
-            if(MatchId.Length>0&&Json.Str(match,"match_id").Length>0&&MatchId!=Json.Str(match,"match_id")){WinningTeam=null;DurationSeconds=null;}
+            string incomingMatch=Json.Str(match,"match_id");if(incomingMatch.Length==0&&session==Session)incomingMatch=MatchId;
+            if(MatchId.Length>0&&incomingMatch.Length>0&&MatchId!=incomingMatch){WinningTeam=null;DurationSeconds=null;Roster.Reset();ViewedHeroId=0;}
             if (phase.Length == 0) phase = "Init";
             var fresh = new Dictionary<int,Player>();
             var ages = Json.Obj(Json.Get(d,"ages"));
@@ -75,18 +86,20 @@ namespace DeadlockOverlay {
                 fresh[slot]=new Player { Slot=slot, Team=(int)team.Value, Hero=(int)Math.Min(hero ?? 0,100000),
                     Name=Limit(Json.Str(p,"player_name"),64), HeroName=Limit(Json.Str(p,"hero_name"),40),
                     SteamId=Json.Str(p,"steam_id"),Local=Json.Bool(p,"is_local") || (steam.Length > 3 && steam == Json.Str(p,"steam_id")),
-                    Lane=(int?)Json.Number(p,"lane"),HudOrder=(int?)Json.Number(p,"hud_order"),LobbySlot=HudOrder.DecodeSlot(Json.Str(p,"lobby_slot")),BridgeBuff=BridgeEffects.Name(Json.Get(p,"modifiers")),Rejuvenator=Json.Flag(p,"rejuvenator"),Rebirth=Json.Flag(p,"rebirth"),
+                    Lane=LaneNumber(p,"lane"),OriginalLane=LaneNumber(p,"original_lane"),ConfirmedLane=LaneNumber(p,"confirmed_lane"),HudOrder=(int?)Json.Number(p,"hud_order"),LobbySlot=HudOrder.DecodeSlot(Json.Str(p,"lobby_slot")),BridgeBuff=BridgeEffects.Name(Json.Get(p,"modifiers")),Rejuvenator=Json.Flag(p,"rejuvenator"),Rebirth=Json.Flag(p,"rebirth"),
                     Damage=Json.Number(p,"hero_damage"), ObjectDamage=Json.Number(p,"object_damage"), Healing=Json.Number(p,"hero_healing"), Kills=Json.Number(p,"kills"),Deaths=Json.Number(p,"deaths"),Assists=Json.Number(p,"assists"),Souls=Json.Number(p,"souls"),UnspentSouls=Json.Number(p,"unspent_souls"),Updated=now.AddMilliseconds(-Math.Min(age ?? 100000,100000)) };
             }
             Session=session; Sequence=seq.Value; Received=now; Phase=phase;
-            MatchId=Json.Str(match,"match_id"); Healthy=Json.Bool(d,"healthy");
+            MatchId=incomingMatch; Healthy=Json.Bool(d,"healthy");
             Spectator=Json.Bool(d,"spectator");
             SourceStatus=Limit(Json.Str(d,"status"),160);
             GameTick=match.Where(x=>x.Key.StartsWith("roster_")).Select(x=>Json.Number(Json.Obj(x.Value),"tick")??0).DefaultIfEmpty(0).Max();
+            if(MatchId.Length>0&&Healthy)Roster.Update(MatchId,fresh.Values);
             Players.Clear(); if (Active) foreach (var p in fresh) Players.Add(p.Key,p.Value);
             return true;
         }
         static string Limit(string s,int n) { return new string(s.Where(c=>!char.IsControl(c)).Take(n).ToArray()); }
+        public static int? LaneNumber(Dictionary<string,object> value,string name){var n=Json.Number(value,name);return n>0&&n<=12?(int?)n:null;}
     }
     public sealed class TeamStats {
         public Player[] Players;

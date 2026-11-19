@@ -36,6 +36,7 @@ namespace DeadlockOverlay {
         readonly MatchState state=new MatchState();
         readonly ItemAdvisor advisor=new ItemAdvisor();
         readonly HudAdvice hudAdvice=new HudAdvice();
+        CounterAdviceWindow counterWindow;
         readonly HudOverlay hud;readonly HudOverlay[] mapWidgets=new HudOverlay[3];readonly LayoutHandle[] handles=new LayoutHandle[6];
         MapEvents mapEvents;
         readonly HeroImages images=new HeroImages();
@@ -52,7 +53,7 @@ namespace DeadlockOverlay {
         readonly OwnMatchDetector ownDetector=new OwnMatchDetector();
         readonly LocalGameSource localSource=new LocalGameSource();
         Dictionary<string,object> pendingLocal,latestLocal;
-        bool localMode;DateTime localRead=DateTime.MinValue,localIdle=DateTime.MinValue;
+        bool localMode;DateTime localRead=DateTime.MinValue,localIdle=DateTime.MinValue;string lastLocalSession="";long lastLocalSequence=-1;
         long? ownDetectedMatch;
         long? detectedMatch;
         string detectorError,autoError;
@@ -80,9 +81,10 @@ namespace DeadlockOverlay {
             SettingsManager.Save(settings);
             ownDetector.Found+=id=>{lock(gate){if(!closing)ownDetectedMatch=id;}};
             ownDetector.Status+=message=>{lock(gate){if(!closing)detectorError=message;}};
-            localSource.Snapshot+=packet=>{lock(gate){if(!closing)pendingLocal=packet;}};
+            localSource.Snapshot+=packet=>{lock(gate){if(!closing&&LiveRoster.NewerPacket(pendingLocal,packet))pendingLocal=packet;}};
             window=new SettingsWindow(settings,Changed,SetDemo);
-            scout=new ScoutController(settings,window);
+            window.CounterDetailsRequested+=OpenCounterDetails;
+            scout=new ScoutController(settings,window,PlayerInsightEngine.AccountId(localSteamId));
             var gameArea=Native.OverlayGameBounds();var gameScreen=gameArea.IsEmpty?null:Screen.FromRectangle(gameArea);
             var settingsScreen=gameScreen==null?Screen.AllScreens.FirstOrDefault(s=>!s.Primary):Screen.AllScreens.FirstOrDefault(s=>s.DeviceName!=gameScreen.DeviceName);
             if(settingsScreen!=null){window.StartPosition=FormStartPosition.Manual;var area=settingsScreen.WorkingArea;window.Location=new Point(area.Left+(area.Width-window.Width)/2,area.Top+(area.Height-window.Height)/2);}
@@ -92,8 +94,8 @@ namespace DeadlockOverlay {
             window.EndSessionRequested+=EndSession;
             left=new OverlayRenderer(true,images);right=new OverlayRenderer(false,images);widgets.Add(left);widgets.Add(right);
             hud=new HudOverlay(hudAdvice);widgets.Add(hud);for(int i=0;i<3;i++){mapWidgets[i]=new HudOverlay(hudAdvice,i+3);widgets.Add(mapWidgets[i]);}for(int i=0;i<6;i++)handles[i]=new LayoutHandle(i);
-            tray=new NotifyIcon { Text="Deadlock Helper by kvintin · v1.1.0-beta.1",Icon=Design.AppIcon,Visible=true };
-            var menu=new ContextMenuStrip(); menu.Items.Add(L.T("Настройки"),null,(s,e)=>Open());menu.Items.Add(L.T("Последняя сводка"),null,(s,e)=>{if(lastSummary!=null)new SummaryWindow(lastSummary).Show();else Process.Start("explorer.exe",SettingsManager.Folder);}); menu.Items.Add(L.T("Скрыть / показать"),null,(s,e)=>{hidden=!hidden;Refresh();});menu.Items.Add(L.T("Выход"),null,(s,e)=>Application.Exit());tray.ContextMenuStrip=menu;tray.DoubleClick+=(s,e)=>Open();
+            tray=new NotifyIcon { Text="Deadlock Helper by kvintin · v1.2.0-dev",Icon=Design.AppIcon,Visible=true };
+            var menu=new ContextMenuStrip(); menu.Items.Add(L.T("Настройки"),null,(s,e)=>Open());menu.Items.Add(L.Choose("Counter Items","Контрпредметы"),null,(s,e)=>OpenCounterDetails());menu.Items.Add(L.T("Последняя сводка"),null,(s,e)=>{if(lastSummary!=null)new SummaryWindow(lastSummary).Show();else Process.Start("explorer.exe",SettingsManager.Folder);}); menu.Items.Add(L.T("Скрыть / показать"),null,(s,e)=>{hidden=!hidden;Refresh();});menu.Items.Add(L.T("Выход"),null,(s,e)=>Application.Exit());tray.ContextMenuStrip=menu;tray.DoubleClick+=(s,e)=>Open();
             hotkey.Toggle+=()=>{hidden=!hidden;Refresh();};hotkey.TogglePart+=part=>{settings.TogglePart(part);SettingsManager.Save(settings);window.SyncVisibility();Refresh();};Changed();
             menu.Items.Insert(1,new ToolStripMenuItem(L.Choose("Match viewer","Просмотр матча"),null,(s,e)=>ShowViewer(selectedMatch)));
             menu.Items.Insert(2,new ToolStripMenuItem(L.Choose("End session and show report","Завершить сеанс и показать сводку"),null,(s,e)=>EndSession()));
@@ -106,6 +108,7 @@ namespace DeadlockOverlay {
             Application.ApplicationExit+=(s,e)=>Cleanup();
         }
         void Open() { window.Show();window.WindowState=FormWindowState.Normal;window.Activate(); }
+        void OpenCounterDetails(){if(counterWindow==null||counterWindow.IsDisposed)counterWindow=new CounterAdviceWindow(hudAdvice,settings,()=>SettingsManager.Save(settings));if(!counterWindow.Visible){if(window.Visible)counterWindow.Show(window);else counterWindow.Show();}counterWindow.Activate();}
         void ShowViewer(long id){viewer.SelectMatch(id);viewer.Show();viewer.WindowState=FormWindowState.Normal;Refresh();}
         void Changed() { ownDetector.Enabled=settings.AutoMatch&&!state.Demo;cursorWasInteractive=false;L.Language=settings.Language;if(tray!=null&&tray.ContextMenuStrip!=null)foreach(ToolStripItem item in tray.ContextMenuStrip.Items)item.Text=L.ToLanguage(item.Text);if(appliedLanguage!=settings.Language){appliedLanguage=settings.Language;foreach(Form form in Application.OpenForms)L.Apply(form);}string keys=settings.Hotkey+":"+string.Join(",",settings.PartHotkeys);if(registeredKeys!=keys){hotkeyOk=hotkey.Register(settings.Hotkey,settings.PartHotkeys);registeredKeys=keys;}
             if(!state.Demo&&detector==null){if(settings.AutoMatch)settings.LiveMatchId=0;var d=new AutoMatchDetector();detector=d;d.MatchChanged+=id=>{lock(gate){if(ReferenceEquals(detector,d))detectedMatch=id;}};d.Status+=message=>{lock(gate)detectorError=message;};d.ClockRead+=(id,seconds)=>{lock(gate){if(ReferenceEquals(detector,d)){clockMatch=id;clockSeconds=seconds;clockRead=DateTime.UtcNow;}}};d.ViewRead+=(id,text)=>{lock(gate){if(ReferenceEquals(detector,d)){viewedMatch=id;viewedName=text;}}};}
@@ -117,7 +120,7 @@ namespace DeadlockOverlay {
             if(mapEvents!=null){mapEvents.Dispose();mapEvents=null;}
             if(real!=null){real.Dispose();real=null;}state.Reset();summaryIssued=false;matchCompleted=false;finalApplied=false;summaryWindow=null;selectedMatch=settings.LiveMatchId;
             lock(gate)pendingReal=null;
-            if(selectedMatch>0){var connector=new LiveBroadcastConnector(selectedMatch);real=connector;connector.SnapshotData+=packet=>{lock(gate){if(!closing&&ReferenceEquals(real,connector))pendingReal=packet;}};connector.Start();mapEvents=new MapEvents(selectedMatch);mapEvents.Start();}
+            if(selectedMatch>0){var connector=new LiveBroadcastConnector(selectedMatch);real=connector;connector.SnapshotData+=packet=>{lock(gate){if(!closing&&ReferenceEquals(real,connector)&&LiveRoster.NewerPacket(pendingReal,packet))pendingReal=packet;}};connector.Start();mapEvents=new MapEvents(selectedMatch);mapEvents.Start();}
         }
         void SetDemo(bool on) {
             localMode=false;latestLocal=null;lock(gate)pendingLocal=null;
@@ -142,17 +145,17 @@ namespace DeadlockOverlay {
             if(localMode&&latestLocal!=null){map=LocalSnapshot.Map(latestLocal);map.Fresh=(DateTime.UtcNow-localRead).TotalSeconds<2;if(map.Fresh&&!map.Paused&&map.Seconds.HasValue)map.Seconds+=(DateTime.UtcNow-localRead).TotalSeconds;}
             lock(gate){if(!localMode&&clockMatch==selectedMatch&&(DateTime.UtcNow-clockRead).TotalSeconds<12){map.Seconds=clockSeconds+(map.Paused?0:(DateTime.UtcNow-clockRead).TotalSeconds);map.ScreenClock=true;map.Fresh=true;}}
             map.Seconds=displayClock.Update(state.MatchId,map.Seconds,map.Paused,DateTime.UtcNow);
-            var own=state.Players.Values.FirstOrDefault(p=>localSteamId.Length>0&&p.SteamId==localSteamId);state.ViewedHeroId=own==null?0:own.Hero;
+            var localAccount=PlayerInsightEngine.AccountId(localSteamId);if(localMode&&latestLocal!=null)state.ResolveLocalPerspective(localAccount,Json.Flag(latestLocal,"spectator"));var own=state.KnownRoster.FirstOrDefault(p=>p.Local||localAccount>0&&p.AccountId==localAccount);state.ViewedHeroId=own==null?0:own.Hero;
             if(detector!=null){detector.Suspended=localMode||settings.EditLayout||!settings.ScreenRecognition||(!settings.AutoMatch&&viewer.Visible);detector.ReadViewEnabled=own==null&&settings.ShowItems;}
             lock(gate){if(own==null&&viewedMatch==selectedMatch){var viewed=ViewedHero.Match(state,viewedName);if(viewed!=null)state.ViewedHeroId=viewed.Hero;}}
-            if(localMode&&latestLocal!=null)state.ViewedHeroId=(int)(Json.Number(latestLocal,"viewed_hero")??0);
+            if(localMode&&latestLocal!=null&&state.Spectator)state.ViewedHeroId=(int)(Json.Number(latestLocal,"viewed_hero")??0);
             map.Ended|=matchCompleted;
             if(!localMode&&!finalApplied&&finalMonitor.Update(state,map)){
                 if(!summaryIssued)FinishSummary(L.T("Матч завершён · итоговые данные"));
                 else {lastSummary=MatchSummary.Capture(state,L.T("Матч завершён · итоговые данные"));try{lastSummary.Save();}catch(Exception e){Log.Write("Final summary save",e);}if(summaryWindow!=null&&!summaryWindow.IsDisposed)summaryWindow.UpdateSummary(lastSummary);}
                 finalApplied=true;StopCompletedMatch();
             }else if(map.Ended&&!matchCompleted){FinishSummary(localMode?L.Choose("Match completed · local statistics","Матч завершён · локальная статистика"):L.T("Матч завершён · ожидаем итоговые данные"));StopCompletedMatch();}
-            hud.Map=map;foreach(var widget in mapWidgets)widget.Map=map;if(!viewer.Visible)hudAdvice.Update(state,map,settings);Refresh();
+            hud.Map=map;foreach(var widget in mapWidgets)widget.Map=map;if(!viewer.Visible||counterWindow!=null&&!counterWindow.IsDisposed&&counterWindow.Visible)hudAdvice.Update(state,map,settings);if(counterWindow!=null&&!counterWindow.IsDisposed&&counterWindow.Visible)counterWindow.RefreshAdvice();Refresh();
             if(settings.Diagnostics && (DateTime.UtcNow-diagnostic).TotalSeconds>=30) {
                 diagnostic=DateTime.UtcNow;using(var p=Process.GetCurrentProcess())Log.Write(string.Format("Resources mode={0} workingSetMB={1:F1} privateMB={2:F1} cpuSeconds={3:F3} handles={4} paints={5}",state.Demo?"demo":"live",p.WorkingSet64/1048576.0,p.PrivateMemorySize64/1048576.0,p.TotalProcessorTime.TotalSeconds,p.HandleCount,left.PaintCount+right.PaintCount));
             }
@@ -161,6 +164,7 @@ namespace DeadlockOverlay {
         void HandleLocal(){
             Dictionary<string,object> raw;lock(gate){raw=pendingLocal;pendingLocal=null;}
             if(!settings.AutoMatch||state.Demo||raw==null)return;
+            string rawSession=Json.Str(raw,"session");var rawSequence=Json.Number(raw,"sequence");if(rawSequence.HasValue){if(rawSession==lastLocalSession&&rawSequence<=lastLocalSequence)return;lastLocalSession=rawSession;lastLocalSequence=rawSequence.Value;}
             scout.Observe(raw);
             string kind=Json.Str(raw,"kind");
             if(kind=="unavailable"){if(localMode){state.Healthy=false;state.SourceStatus=L.Choose("Local source unavailable · reconnecting","Локальный источник недоступен · переподключение");}return;}
@@ -182,8 +186,7 @@ namespace DeadlockOverlay {
                 selectedMatch=id;settings.LiveMatchId=id;localMode=true;autoError=null;
                 Log.Write("Local source connected: match="+id+" players="+(Json.Get(raw,"players") as object[]??new object[0]).Length);
             }
-            latestLocal=raw;localRead=DateTime.UtcNow;
-            if(!matchCompleted){state.Apply(packet,localRead);state.WinningTeam=(int?)Json.Number(raw,"winner");var seconds=LocalSnapshot.Number(raw,"seconds");if(seconds.HasValue)state.DurationSeconds=(long)Math.Max(0,seconds.Value);}
+            if(!matchCompleted){var stamp=DateTime.UtcNow;if(!state.Apply(packet,stamp))return;latestLocal=raw;localRead=stamp;state.WinningTeam=(int?)Json.Number(raw,"winner");var seconds=LocalSnapshot.Number(raw,"seconds");if(seconds.HasValue)state.DurationSeconds=(long)Math.Max(0,seconds.Value);}
         }
         void FinishSummary(string reason){
             if(state.Demo||summaryIssued||state.Players.Count==0)return;
@@ -217,7 +220,7 @@ namespace DeadlockOverlay {
             if(!hotkeyOk)text=L.T("Горячая клавиша занята — выберите другую.\n")+text;
             window.SetStatus(text);
         }
-        void Cleanup() { if(closing)return;closing=true;scout.Dispose();localSource.Dispose();ownDetector.Dispose();foreach(var handle in handles)handle.Dispose();hudAdvice.Dispose();if(mapEvents!=null)mapEvents.Dispose();advisor.Dispose();pulse.Stop();pulse.Dispose();if(detector!=null)detector.Dispose();if(real!=null)real.Dispose();if(demo!=null)demo.Dispose();hotkey.Dispose();tray.Visible=false;var menu=tray.ContextMenuStrip;tray.Dispose();menu.Dispose();widgets.Dispose();images.Dispose();viewer.Dispose();window.Dispose(); }
+        void Cleanup() { if(closing)return;closing=true;scout.Dispose();localSource.Dispose();ownDetector.Dispose();foreach(var handle in handles)handle.Dispose();if(counterWindow!=null)counterWindow.Dispose();hudAdvice.Dispose();if(mapEvents!=null)mapEvents.Dispose();advisor.Dispose();pulse.Stop();pulse.Dispose();if(detector!=null)detector.Dispose();if(real!=null)real.Dispose();if(demo!=null)demo.Dispose();hotkey.Dispose();tray.Visible=false;var menu=tray.ContextMenuStrip;tray.Dispose();menu.Dispose();widgets.Dispose();images.Dispose();viewer.Dispose();window.Dispose(); }
         protected override void Dispose(bool disposing) { if(disposing)Cleanup();base.Dispose(disposing); }
     }
 }

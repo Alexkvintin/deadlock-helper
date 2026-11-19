@@ -47,7 +47,7 @@ namespace DeadlockOverlay {
      }
      OverlayText.Draw(g,map.RiftValue,timerFont,ink,riftImage==null?12:49,34);OverlayText.Draw(g,map.RiftCaption,small,muted,new RectangleF(12,73,172,22));return;
     }
-    for(int team=0;team<2;team++){var players=team==0?left:right;for(int i=0;i<players.Length;i++){var p=players[i];float x=center+(team==0?-780+i*117:194+i*117);var items=advice.Get(p.Hero);if(PreviewOnly&&SampleItems)items=new[]{new ItemSuggestion{Id=1009965641},new ItemSuggestion{Id=1047818222}};if(items.Length==0)continue;Theme.Fill(g,Surface(Theme.Background),new RectangleF(x-43,7,86,66),9);
+    for(int team=0;team<2;team++){var players=team==0?left:right;for(int i=0;i<players.Length;i++){var p=players[i];float x=center+(team==0?-780+i*117:194+i*117);var items=advice.Get(p);if(PreviewOnly&&SampleItems)items=new[]{new ItemSuggestion{Id=1009965641},new ItemSuggestion{Id=1047818222}};if(items.Length==0)continue;Theme.Fill(g,Surface(Theme.Background),new RectangleF(x-43,7,86,66),9);
      for(int j=0;j<2;j++){var rect=new RectangleF(x-36+j*38,13,34,34);var icon=j<items.Length?ItemIcon(items[j].Id):null;if(icon!=null)g.DrawImage(icon,rect);else OverlayText.Draw(g,"·",timerFont,muted,rect.Location);}
      using(var format=new StringFormat{Alignment=StringAlignment.Center,Trimming=StringTrimming.EllipsisCharacter,FormatFlags=StringFormatFlags.NoWrap})OverlayText.Draw(g,p.HeroName,small,muted,new RectangleF(x-42,52,84,16),format);
     }}
