@@ -15,7 +15,23 @@ namespace DeadlockOverlay {
         public static string Strength(ImpactRow r){if(!r.Score.HasValue)return L.T("Недостаточно данных для оценки");var v=Values(r);return string.Join(" · ",Enumerable.Range(0,5).OrderByDescending(i=>v[i]).Take(2).Where(i=>v[i]>0).Select(i=>Labels[i]));}
         static string E(string s){return WebUtility.HtmlEncode(s??"");}
         static string F(double n){return n.ToString("0.0",CultureInfo.InvariantCulture);}
-        static string Icon(int hero){string path=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"assets",hero+".png");return File.Exists(path)?"<img alt='' src='data:image/png;base64,"+Convert.ToBase64String(File.ReadAllBytes(path))+"'>":"<span class='portrait'>?</span>";}
+        static string Icon(int hero){
+            const string missing="<span class='portrait'>?</span>";
+            if(hero<=0)return missing;
+            try{
+                string path=AssetLibrary.Resolve(hero+".png");
+                using(var stream=File.OpenRead(path)){
+                    if(stream.Length<=0||stream.Length>2*1024*1024)return missing;
+                    using(var reader=new BinaryReader(stream)){
+                        byte[] bytes=reader.ReadBytes((int)stream.Length);
+                        using(var memory=new MemoryStream(bytes))using(var image=Image.FromStream(memory,false,true)){
+                            if(image.RawFormat.Guid!=System.Drawing.Imaging.ImageFormat.Png.Guid||image.Width>2048||image.Height>2048)return missing;
+                        }
+                        return "<img alt='' src='data:image/png;base64,"+Convert.ToBase64String(bytes)+"'>";
+                    }
+                }
+            }catch{return missing;}
+        }
         public static PointF[] Points(double[] values,float cx,float cy,float radius){return values.Select((v,i)=>{double a=-Math.PI/2+i*Math.PI*2/5;return new PointF(cx+(float)(Math.Cos(a)*radius*v),cy+(float)(Math.Sin(a)*radius*v));}).ToArray();}
         static string Polygon(double[] values){return string.Join(" ",Points(values,100,95,68).Select(p=>F(p.X)+","+F(p.Y)));}
         public static string Html(MatchSummary summary){
@@ -25,7 +41,7 @@ namespace DeadlockOverlay {
             if(best!=null)b.Append(L.T("<section class='hero'><div class='eyebrow'>ЛИДЕР ПО ИНДЕКСУ ВКЛАДА</div><div class='identity'>")+Icon(best.Player.Hero)+"<div><h1>"+E(best.Player.Name)+"</h1><small>"+E(best.Player.HeroName)+" · "+Patrons.Name(best.Player.Team)+"</small></div><strong class='score'>"+F(best.Score.Value)+L.T(" / 100</strong></div><p class='strength'>Сильные стороны: ")+E(Strength(best))+"</p></section>");
             b.Append(L.T("<section class='compare'><h2>Команда против команды</h2>"));
             Func<Player,long?>[] getters={p=>p.Damage,p=>p.ObjectDamage,p=>p.Healing};
-            for(int i=0;i<3;i++){var metric=getters[i];bool complete=summary.Players.Length==12&&summary.Players.All(p=>metric(p).HasValue);long a=summary.Players.Where(p=>p.Team==2).Sum(p=>metric(p)??0),z=summary.Players.Where(p=>p.Team==3).Sum(p=>metric(p)??0);double portion=complete&&a+z>0?100.0*a/(a+z):50;b.Append("<div class='teams'><span>Hidden King · "+(complete?MatchSummary.N(a):"—")+"</span><small>"+Labels[i]+"</small><span>"+(complete?MatchSummary.N(z):"—")+" · Archmother</span></div><div class='split'><i style='width:"+F(portion)+"%'></i><i style='width:"+F(100-portion)+"%'></i></div>");}
+            for(int i=0;i<3;i++){var metric=getters[i];bool complete=summary.Players.Length==12&&summary.Players.Count(p=>p.Team==2)==6&&summary.Players.Count(p=>p.Team==3)==6&&summary.Players.All(p=>metric(p).HasValue);long a=summary.Players.Where(p=>p.Team==2).Sum(p=>metric(p)??0),z=summary.Players.Where(p=>p.Team==3).Sum(p=>metric(p)??0);double portion=complete&&a+z>0?100.0*a/(a+z):50;b.Append("<div class='teams'><span>Hidden King · "+(complete?MatchSummary.N(a):"—")+"</span><small>"+Labels[i]+"</small><span>"+(complete?MatchSummary.N(z):"—")+" · Archmother</span></div><div class='split'><i style='width:"+F(portion)+"%'></i><i style='width:"+F(100-portion)+"%'></i></div>");}
             b.Append("</section><div class='grid'>");
             foreach(var r in rows){var p=r.Player;var values=Values(r);b.Append("<article class='card'><div class='identity'>"+Icon(p.Hero)+"<div><h2>"+E(p.Name)+"</h2><small>"+E(p.HeroName)+" · "+Patrons.Name(p.Team)+"</small></div><strong class='score'>"+(r.Score.HasValue?F(r.Score.Value)+" "+r.Grade:"—")+L.T("</strong></div><div class='body'><svg viewBox='0 0 200 190' aria-label='Пять показателей вклада'>"));
                 for(int ring=1;ring<=4;ring++)b.Append("<polygon points='"+Polygon(Enumerable.Repeat(ring/4.0,5).ToArray())+"' fill='none' stroke='#465043'/>");

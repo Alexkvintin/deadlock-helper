@@ -4,24 +4,38 @@ using System.Collections.Generic;
 using System.Globalization;
 namespace DeadlockOverlay {
  public sealed class ReviewSample {public int Second;public long? Souls,Damage,Objectives,Healing;}
- public sealed class ReviewPurchase {public int Second;public long Item;public int? Sold;}
+ public sealed class ReviewPurchase {public int Second;public long Item;public int? Sold;public long? UpgradeId;}
  public sealed class ReviewEvent {public int Second,Hero;public string Kind="";}
  public sealed class ScoutMatchDetail {
+  public const int CurrentVersion=4;
   public ReviewEvent[] Events=new ReviewEvent[0];
   public int PayloadVersion;public ReviewSample[] Timeline=new ReviewSample[0];public ReviewPurchase[] Purchases=new ReviewPurchase[0];
   public long Match,Account;public int Hero,Seconds,LastSecond;public DateTime Fetched;
   public long? Damage,Objectives,Healing,TeamHealing;public bool Available;
+  public bool HasRecordedData{get{return (Timeline!=null&&Timeline.Length>0)||(Purchases!=null&&Purchases.Length>0)||(Events!=null&&Events.Length>0);}}
+  static bool InRange(long? value,int maximum){return value.HasValue&&value.Value>=0&&value.Value<=maximum;}
+  public static int? RecordedSale(long? sale,int purchase,int duration){return sale>0&&sale>=purchase&&sale<=duration?(int?)sale:null;}
   public static ScoutMatchDetail Parse(object raw,long match,long account){
    var info=Json.Obj(Json.Get(Json.Obj(raw),"match_info"));var result=new ScoutMatchDetail{Match=match,Account=account,Fetched=DateTime.UtcNow};
-   if(Json.Number(info,"match_id")!=match)return result;
-   var player=(Json.Get(info,"players") as object[]??new object[0]).Select(Json.Obj).FirstOrDefault(p=>Json.Number(p,"account_id")==account);if(player==null)return result;
-   result.Hero=(int)(Json.Number(player,"hero_id")??0);result.Seconds=(int)(Json.Number(info,"duration_s")??0);
-   result.PayloadVersion=3;
+   if(match<=0||account<=0||Json.Number(info,"match_id")!=match)return result;
    var roster=(Json.Get(info,"players") as object[]??new object[0]).Select(Json.Obj).ToArray();
-   result.Events=(Json.Get(player,"death_details") as object[]??new object[0]).Select(Json.Obj).Where(d=>Json.Number(d,"game_time_s")>=0&&Json.Number(d,"game_time_s")<=result.Seconds).Select(d=>{var killer=roster.FirstOrDefault(p=>Json.Number(p,"player_slot")==Json.Number(d,"killer_player_slot"));return new ReviewEvent{Second=(int)Json.Number(d,"game_time_s").Value,Kind="death",Hero=killer==null?0:(int)(Json.Number(killer,"hero_id")??0)};}).OrderBy(d=>d.Second).Take(128).ToArray();
-   result.Timeline=(Json.Get(player,"stats") as object[]??new object[0]).Select(Json.Obj).Where(s=>Json.Number(s,"time_stamp_s")>=0&&Json.Number(s,"time_stamp_s")<=result.Seconds+30).Select(s=>new ReviewSample{Second=(int)Json.Number(s,"time_stamp_s").Value,Souls=Json.Number(s,"net_worth"),Damage=Json.Number(s,"player_damage"),Objectives=Json.Number(s,"boss_damage"),Healing=Json.Number(s,"teammate_healing")}).OrderBy(s=>s.Second).GroupBy(s=>s.Second).Select(g=>g.Last()).Take(600).ToArray();
-   result.Purchases=(Json.Get(player,"items") as object[]??new object[0]).Select(Json.Obj).Where(s=>Json.Number(s,"game_time_s")>=0&&Json.Number(s,"game_time_s")<=result.Seconds&&Json.Number(s,"item_id")>0).Select(s=>new ReviewPurchase{Second=(int)Json.Number(s,"game_time_s").Value,Item=Json.Number(s,"item_id").Value,Sold=(int?)Json.Number(s,"sold_time_s")}).OrderBy(s=>s.Second).Take(256).ToArray();
-   var last=(Json.Get(player,"stats") as object[]??new object[0]).Select(Json.Obj).Where(s=>Json.Number(s,"time_stamp_s").HasValue).OrderBy(s=>Json.Number(s,"time_stamp_s")).LastOrDefault();if(last==null)return result;
+   var matching=roster.Where(p=>Json.Number(p,"account_id")==account).Take(2).ToArray();if(matching.Length!=1)return result;var player=matching[0];
+   var hero=Json.Number(player,"hero_id");var duration=Json.Number(info,"duration_s");
+   if(hero<=0||!InRange(hero,int.MaxValue)||duration<=0||!InRange(duration,int.MaxValue-30))return result;
+   result.Hero=(int)hero.Value;result.Seconds=(int)duration.Value;
+   result.PayloadVersion=CurrentVersion;
+   result.Events=(Json.Get(player,"death_details") as object[]??new object[0]).Select(Json.Obj).Where(d=>InRange(Json.Number(d,"game_time_s"),result.Seconds)).Select(d=>{
+    var slot=Json.Number(d,"killer_player_slot");var killers=slot.HasValue?roster.Where(p=>Json.Number(p,"player_slot")==slot).Take(2).ToArray():new Dictionary<string,object>[0];
+    var killerHero=killers.Length==1?Json.Number(killers[0],"hero_id"):null;
+    return new ReviewEvent{Second=(int)Json.Number(d,"game_time_s").Value,Kind="death",Hero=InRange(killerHero,int.MaxValue)?(int)killerHero.Value:0};
+   }).OrderBy(d=>d.Second).Take(128).ToArray();
+   var snapshots=(Json.Get(player,"stats") as object[]??new object[0]).Select(Json.Obj).Where(s=>InRange(Json.Number(s,"time_stamp_s"),result.Seconds+30)).OrderBy(s=>Json.Number(s,"time_stamp_s")).GroupBy(s=>Json.Number(s,"time_stamp_s")).Select(g=>g.Last()).ToArray();
+   result.Timeline=snapshots.Take(599).Concat(snapshots.Length>599?snapshots.Skip(snapshots.Length-1):new Dictionary<string,object>[0]).Select(s=>new ReviewSample{Second=(int)Json.Number(s,"time_stamp_s").Value,Souls=Json.Number(s,"net_worth"),Damage=Json.Number(s,"player_damage"),Objectives=Json.Number(s,"boss_damage"),Healing=Json.Number(s,"teammate_healing")}).ToArray();
+   result.Purchases=(Json.Get(player,"items") as object[]??new object[0]).Select(Json.Obj).Where(s=>InRange(Json.Number(s,"game_time_s"),result.Seconds)&&Json.Number(s,"item_id")>0&&Json.Number(s,"item_id")<=uint.MaxValue).Select(s=>{
+    int second=(int)Json.Number(s,"game_time_s").Value;
+    return new ReviewPurchase{Second=second,Item=Json.Number(s,"item_id").Value,Sold=RecordedSale(Json.Number(s,"sold_time_s"),second,result.Seconds),UpgradeId=Json.Number(s,"upgrade_id")};
+   }).OrderBy(s=>s.Second).Take(256).ToArray();
+   var last=snapshots.LastOrDefault();if(last==null)return result;
    result.LastSecond=(int)(Json.Number(last,"time_stamp_s")??0);
    // An early snapshot must not masquerade as an end-of-match total.
    result.Available=result.Seconds>0&&result.LastSecond>=result.Seconds-30&&result.LastSecond<=result.Seconds+30;

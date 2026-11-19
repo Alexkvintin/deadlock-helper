@@ -24,8 +24,8 @@
 ## Match review
 
 - Result and duration when known, player statistics, comparative Impact Score, radar and team totals.
-- Recorded economy, damage, objectives and ally-healing snapshots, with exact point tooltips.
-- Item icons, purchase chronology and recorded sale times.
+- Recorded economy, damage, objectives and ally-healing snapshots, with exact point tooltips. Partial histories remain visible with an explicit notice when final totals are unavailable.
+- Item icons, recorded item events and valid recorded sale times; upgrade records may be included in the event history.
 - Contribution highlights and limited comparisons with suitable earlier cached games.
 
 ![Live-statistics overlay with demo data](docs/images/overlay-preview.png)
