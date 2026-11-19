@@ -33,7 +33,7 @@ class ReviewDataIntegrityTests {
   Check(!Parse("\"stats\":[]","1800",",{\"account_id\":7,\"hero_id\":21}").HasRecordedData,"ambiguous account rejected");
   var metadata=new ScoutMetadataCache(1);int fetched=0;
   Func<long,object> response=id=>Json.Serializer().DeserializeObject("{\"match_info\":{\"match_id\":"+id+",\"duration_s\":1800,\"players\":[{\"account_id\":7,\"hero_id\":15,\"stats\":[{\"time_stamp_s\":1800,\"player_damage\":10}]},{\"account_id\":8,\"hero_id\":21,\"stats\":[{\"time_stamp_s\":1800,\"player_damage\":30}]}]}}");
-  Func<long,Func<object>> fetch=id=>()=>{Interlocked.Increment(ref fetched);return response(id);};
+  Func<long,Func<CancellationToken,object>> fetch=id=>token=>{token.ThrowIfCancellationRequested();Interlocked.Increment(ref fetched);return response(id);};
   var first=System.Threading.Tasks.Task.Run(()=>metadata.Resolve(42,7,15,fetch(42),CancellationToken.None));
   var second=System.Threading.Tasks.Task.Run(()=>metadata.Resolve(42,8,21,fetch(42),CancellationToken.None));
   System.Threading.Tasks.Task.WaitAll(first,second);

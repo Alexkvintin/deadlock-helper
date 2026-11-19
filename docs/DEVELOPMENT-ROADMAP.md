@@ -27,11 +27,22 @@
 
 ## Next priorities
 
-1. P0: verify cache stability during fast profile switching and concurrent public-metadata requests, using controlled local fixtures and the existing request limits. Extend failure and cancellation coverage only where new behavior needs it. Keep legacy export fixtures independent of the real runtime cache in subsequent test maintenance.
+1. P0 Scout switching: completed in the follow-up below. Keep legacy export fixtures independent of the real runtime cache in subsequent test maintenance.
 2. P1: investigate final inventory using the already saved public metadata and authoritative item upgrade/removal definitions. The observed `upgrade_id`, `upgrade_info`, `flags` and `sold_time_s` do not by themselves establish final equipped inventory. Do not infer inventory if event semantics remain ambiguous. Build interaction and role analysis only from verified observed data.
 3. P1: physical FHD/1440p multi-monitor/DPI and controlled gameplay frame-time measurement when a suitable session is available. No new polling or capture mechanism is needed for the report improvements.
 4. Deferred: patch-aware LOW/HIGH calibration requires independent verified reference data and acceptance criteria in `docs/PERFORMANCE-CALIBRATION.md`. Current party membership also requires an authoritative source. Keep unsupported labels disabled.
 
+## Scout profile switching follow-up
+
+Based on `a455125`. Completed the P0 switching task without redesigning Scout or changing Match Review controls.
+
+- The selection worker has one active selection and at most one pending (latest) selection. Superseded pending work is discarded; identical active selections are retained. Cancellation and HTTP abort happen on workers, outside the UI thread. Every publication is gated by the selection generation and validated account, match and hero.
+- Concurrent consumers of the same match share one transport and each retain their own cancellation token. A new profile that needs the current match attaches before the previous consumer is cancelled. The shared transport is cancelled only when its last consumer leaves. Metadata transports run one at a time; actual profile HTTP requests are limited to two across instances. The existing 16-match bound, 15-minute completed/one-minute partial metadata TTLs and provider cooldown are retained.
+- Historical disk records and the in-memory selected-player cache remain available while refreshing. A failed or less complete refresh does not replace a verified result; per-record retry suppression avoids repeated immediate retries. Atomic file replacement prevents competing selected-player writes from truncating a valid cache. A changed hero identity does not borrow an older match's statistics.
+- The profile updates its selected identity and clears obsolete hit targets immediately; the header indicates loading for the active account only. Worker notifications are coalesced into UI invalidations and hidden/closed profiles cancel unnecessary work. Returning to teams restores the team scroll position.
+
+Validation: controlled local fixtures in `ScoutSwitchTests.cs` cover rapid and sequential switching among all 12 participants, one shared download, repeat-open, cancellation with another consumer still waiting, cancellation of all consumers and queued work, unrelated match switches, late responses, API failure and incomplete refresh, cache retention, and changed hero identities. Final targeted checks: Scout switching 101, Review data integrity 25, Scout profile 128. Physical gameplay responsiveness and real API latency were not measured in this task. No full legacy regression was repeated.
+
 ## Resume
 
-Worktree: `G:/OwerLock/artifacts/review-data-integrity`. Local executable: `dist/DeadlockHelper.exe`. Run `build.ps1` and compile the relevant test executables in `tests` against `dist/DeadlockHelper.exe` using the .NET Framework x64 compiler; the source workspace retains broader legacy regression fixtures. No new ZIP or GitHub release has been created.
+Worktree: `G:/OwerLock/artifacts/review-data-integrity`. Latest local executable: `dist/scout-switch/DeadlockHelper.exe` (separate output because the previous `dist/DeadlockHelper.exe` was running). Run `build.ps1` when the regular output is not locked, then compile the relevant test executables in `tests` against the resulting managed assembly using the .NET Framework x64 compiler; the source workspace retains broader legacy regression fixtures. No new ZIP or GitHub release has been created.

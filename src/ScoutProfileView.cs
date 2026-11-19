@@ -9,23 +9,30 @@ namespace DeadlockOverlay {
   readonly ProfileImages profileImages=new ProfileImages();readonly ArtCache profileArt=new ArtCache();
   readonly List<KeyValuePair<RectangleF,Action>> profileActions=new List<KeyValuePair<RectangleF,Action>>();
   ScoutDetailService details;string detailSignature="";int teamOffset,profileTab,chartMetric,historyFilter;bool currentHeroOnly;long matchSelected;int matchesOffset;float contentTop=58;
-  public void OpenProfile(ScoutRow row){HideTip();teamOffset=offset;selected=row.Account;offset=0;profileTab=0;historyFilter=0;currentHeroOnly=false;matchSelected=0;detailSignature="";RefreshProfile();Invalidate();}
+  Dictionary<long,int> detailHeroes=new Dictionary<long,int>();int detailRepaintQueued;
+  public void OpenProfile(ScoutRow row){if(row==null||row.Account<=0)return;HideTip();if(selected==0)teamOffset=offset;profileActions.Clear();hits.Clear();selected=row.Account;offset=0;profileTab=0;historyFilter=0;currentHeroOnly=false;matchSelected=0;matchesOffset=0;detailHeroes.Clear();detailSignature="";RefreshProfile();Invalidate();}
+  void DetailChanged(){
+   if(IsDisposed||!IsHandleCreated||System.Threading.Interlocked.Exchange(ref detailRepaintQueued,1)!=0)return;
+   try{BeginInvoke((Action)(()=>{System.Threading.Interlocked.Exchange(ref detailRepaintQueued,0);if(!IsDisposed&&Visible&&selected!=0&&details!=null&&!string.IsNullOrEmpty(detailSignature))Invalidate();}));}
+   catch(InvalidOperationException){System.Threading.Interlocked.Exchange(ref detailRepaintQueued,0);}
+  }
   public void RefreshProfile(){
-   if(selected==0||!Visible||Options==null||!Options.Enabled){if(details!=null)details.Stop();detailSignature="";return;}
-   var row=Rows.FirstOrDefault(r=>r.Account==selected);if(row==null){selected=0;detailSignature="";if(details!=null)details.Stop();return;}
-   var p=Service.Get(row.Account);var h=ScoutStatistics.History(p).Take(20).ToArray();string signature=row.Account+":"+ScoutStatistics.MainHero(p)+":"+Options.Network+":"+string.Join(",",h.Select(m=>m.Id));if(signature==detailSignature)return;detailSignature=signature;
-   if(details==null){details=new ScoutDetailService(Path.Combine(SettingsManager.Folder,"scout-cache","profiles"));details.Changed+=()=>{try{if(!IsDisposed&&IsHandleCreated)BeginInvoke((Action)(()=>{if(!IsDisposed)Invalidate();}));}catch(InvalidOperationException){}};}
+   if(selected==0||!Visible||Options==null||!Options.Enabled){if(details!=null&&detailSignature.Length>0)details.Stop();detailSignature="";detailHeroes.Clear();return;}
+   var row=Rows.FirstOrDefault(r=>r.Account==selected);if(row==null){BackToTeams();return;}
+   var p=Service.Get(row.Account);var h=ScoutStatistics.History(p).Take(20).ToArray();string signature=row.Account+":"+ScoutStatistics.MainHero(p)+":"+Options.Network+":"+string.Join(",",h.Select(m=>m.Id+"/"+m.Hero));if(signature==detailSignature)return;detailSignature=signature;detailHeroes=h.ToDictionary(m=>m.Id,m=>m.Hero);
+   if(details==null){details=new ScoutDetailService(Path.Combine(SettingsManager.Folder,"scout-cache","profiles"));details.Changed+=DetailChanged;}
    details.Open(row.Account,ScoutStatistics.MainHero(p),h,Options.Network);
   }
-  ScoutMatchDetail Detail(long match){return details==null?null:details.Get(selected,match);}
-  void BackToTeams(){HideTip();selected=0;offset=teamOffset;if(details!=null)details.Stop();detailSignature="";Invalidate();}
+  ScoutMatchDetail Detail(long match){int hero;if(details==null||!detailHeroes.TryGetValue(match,out hero))return null;var detail=details.Get(selected,match);return detail!=null&&detail.Account==selected&&detail.Match==match&&detail.Hero==hero?detail:null;}
+  void BackToTeams(){HideTip();profileActions.Clear();hits.Clear();selected=0;offset=teamOffset;if(details!=null)details.Stop();detailSignature="";detailHeroes.Clear();Invalidate();}
   void ActionBox(RectangleF box,Action action,bool content=true){if(content){box.Y+=contentTop-offset;var visible=RectangleF.Intersect(box,new RectangleF(0,contentTop,W,Math.Max(1,H-contentTop)));if(visible.Height<=0)return;box=visible;}profileActions.Add(new KeyValuePair<RectangleF,Action>(box,action));}
   void TipBox(RectangleF box,string text){box.Y+=contentTop-offset;box=RectangleF.Intersect(box,new RectangleF(0,contentTop,W,Math.Max(1,H-contentTop)));if(box.Height>0)tips.Add(new KeyValuePair<RectangleF,string>(box,text));}
   void Button(Graphics g,string label,RectangleF box,Action action,bool active=false){Theme.Fill(g,active?Color.FromArgb(28,66,60):Theme.Card,box,7);TextAt(g,label,14,active?Theme.Green:Theme.Ink,new RectangleF(box.X+12,box.Y+10,box.Width-24,26));ActionBox(box,()=>{HideTip();action();Invalidate();});}
   string TacticalTitle(ScoutRow row){return !UserTeam.HasValue?T("TACTICAL NOTES","ТАКТИЧЕСКИЕ ЗАМЕТКИ"):row.Team==UserTeam.Value?T("WHAT TO EXPECT FROM YOUR ALLY","ЧЕГО ОЖИДАТЬ ОТ СОЮЗНИКА"):T("HOW TO PLAY AGAINST THEM","КАК ИГРАТЬ ПРОТИВ НЕГО");}
   void DrawDetail(Graphics g,ScoutRow row,int unused){
    var data=Data(row);var p=data.Profile;var h=data.History.Take(20).ToArray();TextAt(g,T("← Teams","← Команды"),15,Theme.Green,new RectangleF(16,14,160,30));ActionBox(new RectangleF(12,8,170,40),BackToTeams,false);
-   TextAt(g,T("PLAYER PROFILE","ПРОФИЛЬ ИГРОКА"),13,Theme.Gold,new RectangleF(190,17,W>=620?W-440:W-210,25));if(W>=620){int ready=h.Count(m=>Detail(m.Id)!=null);string status=details!=null&&details.Status=="cooldown"?T("Source busy · reopen later","Источник занят · откройте позже"):ready<h.Length&&Options.Network?T("Loading details ","Загрузка данных ")+ready+"/"+h.Length:T("Match details ","Данные матчей ")+h.Count(m=>Detail(m.Id)!=null&&Detail(m.Id).Available)+"/"+h.Length;TextAt(g,status,12,Theme.Muted,new RectangleF(W-232,17,220,25));}
+   bool loading=details!=null&&details.IsLoading(row.Account);int ready=h.Count(m=>{var d=Detail(m.Id);return d!=null&&d.Available;});
+   TextAt(g,T("PLAYER PROFILE","ПРОФИЛЬ ИГРОКА"),13,Theme.Gold,new RectangleF(190,17,W>=620?W-440:W-210,25));if(W>=620){string status=details!=null&&details.StatusFor(row.Account)=="cooldown"?T("Source busy · reopen later","Источник занят · откройте позже"):loading?T("Loading details ","Загрузка данных ")+ready+"/"+h.Length:T("Match details ","Данные матчей ")+ready+"/"+h.Length;TextAt(g,status,12,Theme.Muted,new RectangleF(W-232,17,220,25));}else if(loading)TextAt(g,T("Loading…","Загрузка…"),11,Theme.Muted,new RectangleF(190,38,W-200,18));
    float width=W-32;bool wide=width>=760;Image art=details==null?null:profileImages.Get(details.Art(data.Main));if(art==null)art=profileArt.Get("hero-"+data.Main);bool hasArt=art!=null&&art.Width>=256&&art.Height>=256;int headerHeight=246;int y=headerHeight+16;
    var saved=g.Save();g.SetClip(new RectangleF(0,contentTop,W,Math.Max(1,H-contentTop)));g.TranslateTransform(0,contentTop-offset);
    var banner=new RectangleF(16,0,width,headerHeight);Theme.Fill(g,Color.FromArgb(21,35,40),banner,12);

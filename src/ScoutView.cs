@@ -61,7 +61,7 @@ namespace DeadlockOverlay {
   void HideTip(){tip="";tooltip.Active=false;tooltip.Hide(this);tooltip.RemoveAll();}
   protected override void OnMouseMove(MouseEventArgs e){base.OnMouseMove(e);var point=new PointF(e.X/Zoom,e.Y/Zoom);string next="";foreach(var item in tips.Where(t=>selected!=0||point.Y>=110))if(item.Key.Contains(point)){next=item.Value;break;}if(tip!=next){tooltip.Hide(this);tip=next;tooltip.Active=Visible&&next.Length>0;tooltip.SetToolTip(this,next);}Cursor=profileActions.Any(a=>a.Key.Contains(point))||hits.Any(h=>h.Key.Contains(point))?Cursors.Hand:Cursors.Default;}
   protected override void OnMouseLeave(EventArgs e){base.OnMouseLeave(e);HideTip();}
-  protected override void OnVisibleChanged(EventArgs e){base.OnVisibleChanged(e);if(!Visible){HideTip();if(details!=null)details.Stop();detailSignature="";}}
+  protected override void OnVisibleChanged(EventArgs e){base.OnVisibleChanged(e);if(!Visible){HideTip();if(details!=null)details.Stop();detailSignature="";if(detailHeroes!=null)detailHeroes.Clear();}else if(Service!=null&&selected!=0)RefreshProfile();}
   protected override void Dispose(bool disposing){if(disposing){ranks.Dispose();portraits.Dispose();tooltip.Dispose();profileImages.Dispose();profileArt.Dispose();if(details!=null)details.Dispose();}base.Dispose(disposing);}
  }
 }
