@@ -11,7 +11,8 @@ namespace DeadlockOverlay {
   public bool Manual,InventoryKnown,LanePhase;
   public long? Souls;
   public static string Key(Player p){return p.AccountId>0?"a:"+p.AccountId:"s:"+p.Team+":"+p.Slot+":"+p.Hero;}
-  public static CounterContext Create(MatchState state,MapSnapshot map,string manual){
+  public static CounterContext Create(MatchState state,MapSnapshot map,string manual){return CreateSelected(state,map,string.IsNullOrEmpty(manual)?new string[0]:new[]{manual});}
+  public static CounterContext CreateSelected(MatchState state,MapSnapshot map,IEnumerable<string> manual){
    var result=new CounterContext();if(state==null||string.IsNullOrEmpty(state.MatchId)||!state.Healthy)return result;
    var roster=state.KnownRoster;var candidates=!state.Spectator?state.Players.Values.Where(p=>p.Local).ToArray():roster.Where(p=>p.Hero>0&&p.Hero==state.ViewedHeroId).ToArray();if(!state.Spectator&&candidates.Length==0)candidates=roster.Where(p=>p.Local).ToArray();
    // Viewing a hero is a perspective change, not a change to the roster's player identity.
@@ -21,8 +22,8 @@ namespace DeadlockOverlay {
    var observed=state.Players.Values.Where(p=>Key(p)==Key(focus)&&p.Hero==focus.Hero).ToArray();if(observed.Length==1)result.Souls=observed[0].UnspentSouls;
    result.Phase=map!=null&&map.Fresh&&map.Seconds.HasValue?HelperSource.Phase(map.Seconds.Value):"";
    result.LanePhase=LocalSnapshot.Pregame(state.Phase)||map!=null&&map.Fresh&&map.Seconds.HasValue&&map.Seconds.Value<480;
-   var selected=result.Enemies.Where(p=>Key(p)==manual).ToArray();
-   if(selected.Length==1){result.Manual=true;result.LaneEnemies=selected;result.LaneStatus=L.Choose("Manual lane opponent","Соперник линии выбран вручную");}
+   var chosen=new HashSet<string>(manual);var selected=result.Enemies.Where(p=>chosen.Contains(Key(p))).ToArray();
+   if(chosen.Count>0){result.Manual=true;result.LaneEnemies=selected;result.LaneStatus=L.Choose("Manual lane: ","Ручной выбор линии: ")+selected.Length+"/"+chosen.Count;}
    else if(focus.ConfirmedLane.HasValue){result.LaneEnemies=result.Enemies.Where(p=>p.ConfirmedLane==focus.ConfirmedLane).ToArray();result.LaneStatus=result.LaneEnemies.Length>0?L.Choose("Confirmed lane","Подтверждённая линия"):L.Choose("Lane opponents unknown","Противники линии неизвестны");}
    else result.LaneStatus=L.Choose("Lane not confirmed - choose an opponent","Линия не подтверждена - выберите соперника");
    return result;

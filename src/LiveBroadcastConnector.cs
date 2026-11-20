@@ -99,8 +99,8 @@ namespace DeadlockOverlay {
                 int id=(int)entity.Value;
                 if(!rows.ContainsKey(id)&&rows.Count>=12)return false;
                 // Reconnect can replay a prefix. Do not roll counters back to older ticks.
-                if(rows.ContainsKey(id)&&(Json.Number(rows[id],"tick")??0)>rowTick)return false;
-                if(rows.ContainsKey(id)&&Json.Number(rows[id],"tick")==rowTick&&Json.Number(rows[id],"hero_id")>0&&Json.Number(d,"hero_id")>0&&Json.Number(rows[id],"hero_id")!=Json.Number(d,"hero_id"))return false;
+                if(rows.ContainsKey(id)&&(Json.Number(rows[id],"tick")??0)>rowTick){LiveDiagnostics.Rejected("broadcast");return false;}
+                if(rows.ContainsKey(id)&&Json.Number(rows[id],"tick")==rowTick&&Json.Number(rows[id],"hero_id")>0&&Json.Number(d,"hero_id")>0&&Json.Number(rows[id],"hero_id")!=Json.Number(d,"hero_id")){LiveDiagnostics.Rejected("broadcast");return false;}
                 string name;int hero=(int)(Json.Number(d,"hero_id")??0);
                 d["hero_name"]=heroes.TryGetValue(hero,out name)?name:"Hero "+hero;
                 // The public broadcast field is the original assignment, not a confirmed live lane.

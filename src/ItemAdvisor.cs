@@ -13,6 +13,7 @@ namespace DeadlockOverlay {
         public string Target,Why,Condition,Image;
         public int? Cost;
         public bool? Affordable;
+        public double Priority;
         public double WinRate {get{return Wins+Losses>0?100.0*Wins/(Wins+Losses):0;}}
     }
     public sealed class Advice {

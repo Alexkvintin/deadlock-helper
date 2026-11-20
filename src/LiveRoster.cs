@@ -9,7 +9,7 @@ namespace DeadlockOverlay {
   public int Revision{get;private set;}
   public Player[] Rows{get{return rows;}}
   static string Key(Player p){return p.AccountId>0?"a:"+p.AccountId:"s:"+p.Slot;}
-  public static bool NewerPacket(Dictionary<string,object> pending,Dictionary<string,object> incoming){if(pending==null||incoming==null)return incoming!=null;var first=Json.Number(pending,"sequence");var second=Json.Number(incoming,"sequence");return Json.Str(pending,"session")!=Json.Str(incoming,"session")||!first.HasValue||!second.HasValue||second>first;}
+  public static bool NewerPacket(Dictionary<string,object> pending,Dictionary<string,object> incoming){if(pending==null||incoming==null)return incoming!=null;var first=Json.Number(pending,"sequence");var second=Json.Number(incoming,"sequence");bool newer=Json.Str(pending,"session")!=Json.Str(incoming,"session")||!first.HasValue||!second.HasValue||second>first;if(!newer)LiveDiagnostics.Rejected("pending");return newer;}
   public void Reset(){known.Clear();rows=new Player[0];scope="";Revision++;}
   static string Fingerprint(IEnumerable<Player> players){return string.Join(";",players.OrderBy(Key).Select(p=>Key(p)+":"+p.Team+":"+p.Hero+":"+p.Slot+":"+p.Name+":"+p.Local+":"+p.OriginalLane+":"+p.ConfirmedLane+":"+p.Lane));}
   public void Update(string matchScope,IEnumerable<Player> snapshot){

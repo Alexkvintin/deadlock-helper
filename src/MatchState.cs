@@ -54,24 +54,27 @@ namespace DeadlockOverlay {
         }
         public void ResolveLocalPerspective(long account,bool? sourceSpectator){
             if(account<=0||sourceSpectator!=false)return;
-            var own=Players.Values.Where(p=>p.AccountId==account).ToArray();if(own.Length!=1)return;
-            if(Players.Values.Any(p=>p.Local&&p.AccountId!=account))return;
-            own[0].Local=true;Spectator=false;ViewedHeroId=own[0].Hero;
+            var candidates=Active?Players.Values.ToArray():KnownRoster;var own=candidates.Where(p=>p.AccountId==account).ToArray();
+            if(candidates.Any(p=>p.Local&&p.AccountId!=account))return;
+            if(own.Length==0)own=KnownRoster.Where(p=>p.AccountId==account).ToArray();if(own.Length!=1)return;
+            own[0].Local=true;var known=KnownRoster.Where(p=>p.AccountId==account).ToArray();if(known.Length==1)known[0].Local=true;Spectator=false;ViewedHeroId=own[0].Hero;
         }
         public bool Connected(DateTime now) { return (now - Received).TotalSeconds < 8; }
-        public void Reset() { Players.Clear();Roster.Reset();ViewedHeroId=0;WinningTeam=null;DurationSeconds=null; Phase="Init"; MatchId=""; Sequence=-1; Session=""; Healthy=false; Spectator=false; SourceStatus=L.T("Укажите ID просматриваемого матча"); Received=DateTime.MinValue; }
+        public void Reset() { if(LiveDiagnostics.Enabled&&MatchId.Length>0)LiveDiagnostics.Event("lifecycle","reset match="+LiveDiagnostics.Match(MatchId));Players.Clear();Roster.Reset();ViewedHeroId=0;WinningTeam=null;DurationSeconds=null; Phase="Init"; MatchId=""; Sequence=-1; Session=""; Healthy=false; Spectator=false; SourceStatus=L.T("Укажите ID просматриваемого матча"); Received=DateTime.MinValue; }
         public bool Apply(string json, DateTime now) {
             return Apply(Json.Obj(Json.Serializer().DeserializeObject(json)),now);
         }
         public bool Apply(Dictionary<string,object> d,DateTime now) {
             var session = Json.Str(d,"session"); var seq = Json.Number(d,"sequence");
             if (session.Length == 0 || !seq.HasValue) throw new FormatException("Missing session/sequence");
-            if (session == Session && seq <= Sequence) return false;
+            if (session == Session && seq <= Sequence){LiveDiagnostics.Rejected("match-state");return false;}
             var info = Json.Obj(Json.Get(d,"info"));
             var game = Json.Obj(Json.Get(info,"game_info"));
             var match = Json.Obj(Json.Get(info,"match_info"));
             string phase = Json.Str(game,"phase");
+            string source=Json.Str(d,"source")=="local"?"local":"broadcast/other";
             string incomingMatch=Json.Str(match,"match_id");if(incomingMatch.Length==0&&session==Session)incomingMatch=MatchId;
+            if(LiveDiagnostics.Enabled&&MatchId!=incomingMatch)LiveDiagnostics.Event(source,"match "+LiveDiagnostics.Match(MatchId)+" -> "+LiveDiagnostics.Match(incomingMatch));
             if(MatchId.Length>0&&incomingMatch.Length>0&&MatchId!=incomingMatch){WinningTeam=null;DurationSeconds=null;Roster.Reset();ViewedHeroId=0;}
             if (phase.Length == 0) phase = "Init";
             var fresh = new Dictionary<int,Player>();
@@ -94,7 +97,7 @@ namespace DeadlockOverlay {
             Spectator=Json.Bool(d,"spectator");
             SourceStatus=Limit(Json.Str(d,"status"),160);
             GameTick=match.Where(x=>x.Key.StartsWith("roster_")).Select(x=>Json.Number(Json.Obj(x.Value),"tick")??0).DefaultIfEmpty(0).Max();
-            if(MatchId.Length>0&&Healthy)Roster.Update(MatchId,fresh.Values);
+            if(MatchId.Length>0&&Healthy){var prior=LiveDiagnostics.Enabled?Roster.Rows.Select(p=>new Player{SteamId=p.SteamId,Slot=p.Slot,Team=p.Team,Hero=p.Hero,OriginalLane=p.OriginalLane,ConfirmedLane=p.ConfirmedLane}).ToArray():null;int revision=Roster.Revision;Roster.Update(MatchId,fresh.Values);if(prior!=null&&Roster.Revision!=revision)LiveDiagnostics.Roster(source,LiveDiagnostics.Match(MatchId),prior,Roster.Rows);}
             Players.Clear(); if (Active) foreach (var p in fresh) Players.Add(p.Key,p.Value);
             return true;
         }

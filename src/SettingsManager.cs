@@ -16,6 +16,7 @@ namespace DeadlockOverlay {
         public int AdvisorHero=0,AdvisorPhase=0;
         public int CounterMode=0;
         public bool ShowItems=true;
+        public bool LiveValidationDiagnostics=false;
         public bool ScreenRecognition=true;
         public string Language="en";
         public bool ShowRift=true,ShowCrystals=true,ShowMidBoss=true;

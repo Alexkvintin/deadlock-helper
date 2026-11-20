@@ -47,7 +47,7 @@ namespace DeadlockOverlay {
    if(index==0)return null;
    // Keep the final roster until the application captures its report.
    bool local=false;foreach(var entry in roster)if(entry.Key.StartsWith("roster_"))local|=Json.Bool(Json.Obj(entry.Value),"is_local");
-   return new Dictionary<string,object>{{"session",Json.Str(d,"session")},{"sequence",Json.Get(d,"sequence")},{"healthy",true},{"spectator",Json.Bool(d,"spectator")||!local},{"status",L.Choose("Local game · live data","Игра · локальные данные")},{"ages",ages},
+   return new Dictionary<string,object>{{"source","local"},{"session",Json.Str(d,"session")},{"sequence",Json.Get(d,"sequence")},{"healthy",true},{"spectator",Json.Bool(d,"spectator")||!local},{"status",L.Choose("Local game · live data","Игра · локальные данные")},{"ages",ages},
     {"info",new Dictionary<string,object>{{"game_info",new Dictionary<string,object>{{"phase",Ended(phase)?"GameInProgress":phase}}},{"match_info",roster}}}};
   }
   public static bool Ended(string phase){return phase=="PostGame"||phase=="PostGame_PlayOfTheGame"||phase=="End";}
