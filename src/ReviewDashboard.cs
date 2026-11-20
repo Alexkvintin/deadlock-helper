@@ -8,8 +8,8 @@ namespace DeadlockOverlay {
   readonly MatchSummary summary;readonly ImpactRow[] rows;readonly HeroImages portraits=new HeroImages();readonly ArtCache art=new ArtCache();
   readonly ToolTip tooltip=new ToolTip();RectangleF[] cards=new RectangleF[0];int metric,hover=-1;float factor=1;
   public event Action<Player> PlayerSelected;
-  public static string[] Tabs{get{return new[]{L.Choose("Overview","Обзор"),L.Choose("Economy","Экономика"),L.Choose("Damage","Урон"),L.Choose("Healing","Лечение"),L.Choose("Structures","Строения")};}}
-  public int Metric{get{return metric;}set{metric=Math.Max(0,Math.Min(4,value));Invalidate();}}
+  public static string[] Tabs{get{return new[]{L.Choose("Overview","Обзор"),L.Choose("Economy","Экономика"),L.Choose("Damage","Урон"),L.Choose("Healing","Лечение"),L.Choose("Structures","Строения"),L.Choose("Compare","Сравнить")};}}
+  public int Metric{get{return metric;}set{metric=Math.Max(0,Math.Min(5,value));Invalidate();}}
   public ReviewDashboard(MatchSummary s){summary=s;rows=s.Rank().OrderBy(x=>x.Player.Team).ThenByDescending(x=>x.Score??-1).ToArray();DoubleBuffered=true;BackColor=Theme.Background;Cursor=Cursors.Hand;Height=760;Resize+=(a,e)=>{Height=(int)(760*Width/1160f);Invalidate();};AccessibleName=L.Choose("Match player cards. Select a player for details.","Карточки игроков. Выберите игрока для подробностей.");}
   long? Value(Player p){return metric==1?p.Souls:metric==3?p.Healing:metric==4?p.ObjectDamage:p.Damage;}
   Color Accent{get{return metric==1?Theme.SoulsBlue:metric==3?Theme.Healing:metric==4?Theme.StructureDamage:Theme.HeroDamage;}}
@@ -21,6 +21,7 @@ namespace DeadlockOverlay {
    string duration=summary.DurationSeconds.HasValue?(summary.DurationSeconds.Value/60).ToString("00")+":"+(summary.DurationSeconds.Value%60).ToString("00"):"—";
    Design.Text(g,"#"+summary.MatchId+"   ·   "+L.Choose("Duration ","Длительность ")+duration+"   ·   "+summary.Captured.ToLocalTime().ToString("dd MMM yyyy",System.Globalization.CultureInfo.GetCultureInfo(L.Language)),13,Theme.Muted,new RectangleF(24,87,1000,24));
    Design.Text(g,L.ToLanguage(summary.Reason),12,Theme.Muted,new RectangleF(24,111,1100,24));
+   if(metric==5){DrawComparison(g);return;}
    for(int team=0;team<2;team++){float x=24+team*568;var logo=art.Get("patron-"+(team+2));if(logo!=null)g.DrawImage(logo,x,143,30,30);Design.Text(g,Patrons.Name(team+2).ToUpperInvariant(),16,team==0?Theme.Gold:Theme.SoulsBlue,new RectangleF(x+40,148,480,26),true);}
    cards=new RectangleF[rows.Length];var best=rows.Where(x=>x.Score.HasValue).OrderByDescending(x=>x.Score).FirstOrDefault();
    for(int i=0;i<rows.Length;i++){var r=rows[i];var p=r.Player;int team=p.Team==2?0:1;int position=rows.Take(i).Count(candidate=>candidate.Player.Team==p.Team);float x=24+team*568+position%6*91,y=190;var box=new RectangleF(x,y,86,222);cards[i]=box;
@@ -42,6 +43,19 @@ namespace DeadlockOverlay {
    Theme.Fill(g,Theme.Card,new RectangleF(592,464,544,266),9);Design.Frame(g,new RectangleF(592,464,544,266),Design.Line);Design.Text(g,L.Choose("STANDOUT PERFORMANCE","ЛИДЕР ВКЛАДА"),14,Theme.Gold,new RectangleF(612,482,504,24),true);
    if(best!=null){var img=portraits.Get(best.Player.Hero);if(img!=null)g.DrawImage(img,612,524,88,88);Design.Text(g,best.Player.Name,24,Theme.Ink,new RectangleF(718,521,390,34),true);Design.Text(g,best.Player.HeroName+" · "+Patrons.Name(best.Player.Team),13,Theme.Muted,new RectangleF(718,559,390,23));Design.Text(g,best.Score.Value.ToString("0.0")+" "+best.Grade,32,Theme.Green,new RectangleF(718,591,390,45),true);Design.Text(g,SummaryView.Strength(best),14,Theme.Gold,new RectangleF(612,652,500,24));}
    else Design.Text(g,L.Choose("Not enough data for an impact score","Недостаточно данных для оценки вклада"),16,Theme.Muted,new RectangleF(612,540,500,35));
+  }
+  void DrawComparison(Graphics g){
+   string[] names={"K / D / A",L.Choose("Hero damage","Урон героям"),L.Choose("Objectives","Строения"),L.Choose("Healing","Лечение"),L.Choose("Net worth","Экономика"),L.Choose("Impact","Вклад")};
+   Color[] colors={Theme.Ink,Theme.HeroDamage,Theme.StructureDamage,Theme.Healing,Theme.SoulsBlue,Theme.Green};
+   Func<ImpactRow,double?>[] values={r=>null,r=>r.Player.Damage,r=>r.Player.ObjectDamage,r=>r.Player.Healing,r=>r.Player.Souls,r=>r.Score};
+   var maximum=values.Select(f=>rows.Select(f).Where(v=>v.HasValue).Select(v=>v.Value).DefaultIfEmpty(0).Max()).ToArray();
+   float left=260,cw=145;for(int i=0;i<6;i++)Design.Text(g,names[i],14,colors[i],new RectangleF(left+i*cw,148,cw-8,24),true);
+   cards=new RectangleF[rows.Length];
+   for(int i=0;i<rows.Length;i++){var r=rows[i];var p=r.Player;float y=180+i*45;var box=new RectangleF(24,y,1112,41);cards[i]=box;Theme.Fill(g,i==hover?Color.FromArgb(29,54,56):Theme.Card,box,6);var portrait=portraits.Get(p.Hero);if(portrait!=null)g.DrawImage(portrait,32,y+4,34,34);Design.Text(g,p.Name,13,p.Team==2?Theme.Gold:Theme.SoulsBlue,new RectangleF(74,y+1,174,19),true);Design.Text(g,p.HeroName,11,Theme.Muted,new RectangleF(74,y+20,174,18));
+    Design.Text(g,MatchSummary.N(p.Kills)+" / "+MatchSummary.N(p.Deaths)+" / "+MatchSummary.N(p.Assists),14,Theme.Ink,new RectangleF(left,y+9,cw-8,24));
+    for(int m=1;m<6;m++){float x=left+m*cw;var v=values[m](r);Design.Text(g,v.HasValue?(m==5?v.Value.ToString("0.0"):v.Value.ToString("N0")):"—",14,v.HasValue?colors[m]:Theme.Muted,new RectangleF(x,y+2,cw-12,22),true);if(v.HasValue&&maximum[m]>0){Theme.Fill(g,Color.FromArgb(44,60,64),new RectangleF(x,y+30,cw-18,4),2);float w=(float)(v.Value/maximum[m])*(cw-18);if(w>0)Theme.Fill(g,colors[m],new RectangleF(x,y+30,w,4),Math.Min(w/2,2));}}
+   }
+   Design.Text(g,L.Choose("Bars compare available values in this match only. Missing values are not zeros.","Полосы сравнивают доступные значения только в этом матче. Отсутствующие значения не равны нулю."),12,Theme.Muted,new RectangleF(24,730,1112,22));
   }
   static string Compact(long? value){return value.HasValue?OverlayRenderer.Format(value.Value,true):"—";}
   protected override void OnMouseMove(MouseEventArgs e){base.OnMouseMove(e);int hit=Array.FindIndex(cards,r=>r.Contains(e.X/factor,e.Y/factor));if(hit==hover)return;hover=hit;tooltip.SetToolTip(this,hit<0?"":rows[hit].Player.Name+" · "+rows[hit].Player.HeroName+"\n"+L.Choose("Click for player details","Нажмите для подробностей"));Invalidate();}

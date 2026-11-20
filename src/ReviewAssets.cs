@@ -11,6 +11,7 @@ namespace DeadlockOverlay {
  public sealed class ReviewAssets:IDisposable {
   readonly CancellationTokenSource cancel=new CancellationTokenSource();Task worker;public event Action Changed;
   volatile Dictionary<long,ReviewItem> items=new Dictionary<long,ReviewItem>();
+  public int CatalogueRevision{get{return items.Count>0?1:0;}}
   public ReviewItem Get(long id){ReviewItem item;return items.TryGetValue(id,out item)?item:null;}
   public void Load(long[] ids,bool online){if(worker!=null)return;worker=Task.Run(()=>{try{
    string folder=Path.Combine(SettingsManager.Folder,"counter-helper"),path=Path.Combine(folder,"items.json");var json=Json.Serializer();json.MaxJsonLength=16*1024*1024;string text=File.Exists(path)&&new FileInfo(path).Length<16*1024*1024?File.ReadAllText(path):null;

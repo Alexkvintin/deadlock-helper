@@ -71,6 +71,7 @@ namespace DeadlockOverlay {
         Rectangle lastGameBounds;
         bool cursorWasInteractive;DateTime nextMenuPaint=DateTime.MinValue;
         DateTime diagnostic=DateTime.UtcNow;
+        DateTime nextCounterRefresh;
         readonly Stopwatch life=Stopwatch.StartNew();
         readonly int exitSeconds;
         public OverlayApplication(string[] args) {
@@ -155,7 +156,7 @@ namespace DeadlockOverlay {
                 else {lastSummary=MatchSummary.Capture(state,L.T("Матч завершён · итоговые данные"));try{lastSummary.Save();}catch(Exception e){Log.Write("Final summary save",e);}if(summaryWindow!=null&&!summaryWindow.IsDisposed)summaryWindow.UpdateSummary(lastSummary);}
                 finalApplied=true;StopCompletedMatch();
             }else if(map.Ended&&!matchCompleted){FinishSummary(localMode?L.Choose("Match completed · local statistics","Матч завершён · локальная статистика"):L.T("Матч завершён · ожидаем итоговые данные"));StopCompletedMatch();}
-            hud.Map=map;foreach(var widget in mapWidgets)widget.Map=map;if(!viewer.Visible||counterWindow!=null&&!counterWindow.IsDisposed&&counterWindow.Visible)hudAdvice.Update(state,map,settings);if(counterWindow!=null&&!counterWindow.IsDisposed&&counterWindow.Visible)counterWindow.RefreshAdvice();Refresh();
+            hud.Map=map;foreach(var widget in mapWidgets)widget.Map=map;if(!viewer.Visible||counterWindow!=null&&!counterWindow.IsDisposed&&counterWindow.Visible)hudAdvice.Update(state,map,settings);if(counterWindow!=null&&!counterWindow.IsDisposed&&counterWindow.Visible&&DateTime.UtcNow>=nextCounterRefresh){nextCounterRefresh=DateTime.UtcNow.AddMilliseconds(200);counterWindow.RefreshAdvice();}Refresh();
             if(settings.Diagnostics && (DateTime.UtcNow-diagnostic).TotalSeconds>=30) {
                 diagnostic=DateTime.UtcNow;using(var p=Process.GetCurrentProcess())Log.Write(string.Format("Resources mode={0} workingSetMB={1:F1} privateMB={2:F1} cpuSeconds={3:F3} handles={4} paints={5}",state.Demo?"demo":"live",p.WorkingSet64/1048576.0,p.PrivateMemorySize64/1048576.0,p.TotalProcessorTime.TotalSeconds,p.HandleCount,left.PaintCount+right.PaintCount));
             }

@@ -65,7 +65,7 @@ namespace DeadlockOverlay {
             var canvas=new ReviewDashboard(summary){Location=new Point(0,0)};scroll.Controls.Add(canvas);scroll.Resize+=(s,e)=>{canvas.Width=Math.Max(760,scroll.ClientSize.Width-22);};canvas.Width=1160;
             canvas.PlayerSelected+=p=>new PlayerDetailWindow(summary,p).Show(this);
             var tabs=new FlowLayoutPanel{Dock=DockStyle.Top,Height=50,Padding=new Padding(18,5,0,0),BackColor=Theme.Card};
-            for(int i=0;i<ReviewDashboard.Tabs.Length;i++){int metric=i;var tab=new Button{Text=ReviewDashboard.Tabs[i],Width=145,Height=36};tab.Click+=(a,e)=>{canvas.Metric=metric;foreach(Control c in tabs.Controls)c.BackColor=Theme.Card;tab.BackColor=Color.FromArgb(28,66,60);};tabs.Controls.Add(tab);}Theme.Skin(tabs);Controls.Add(tabs);
+            for(int i=0;i<ReviewDashboard.Tabs.Length;i++){int metric=i;var tab=new Button{Text=ReviewDashboard.Tabs[i],Width=118,Height=36};tab.Click+=(a,e)=>{canvas.Metric=metric;foreach(Control c in tabs.Controls)c.BackColor=Theme.Card;tab.BackColor=Color.FromArgb(28,66,60);};tabs.Controls.Add(tab);}Theme.Skin(tabs);Controls.Add(tabs);
             var footer=new Button{Text=L.T("Открыть полный отчёт · сравнение команд и методика"),Dock=DockStyle.Bottom,Height=48};footer.Click+=(s,e)=>{if(string.IsNullOrEmpty(summary.SavedPath))summary.Save();System.Diagnostics.Process.Start(summary.SavedPath);};Controls.Add(footer);Theme.Skin(footer);
             ResumeLayout();Invalidate(true);
         }

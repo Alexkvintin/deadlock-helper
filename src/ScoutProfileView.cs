@@ -8,9 +8,9 @@ namespace DeadlockOverlay {
  public sealed partial class ScoutView {
   readonly ProfileImages profileImages=new ProfileImages();readonly ArtCache profileArt=new ArtCache();
   readonly List<KeyValuePair<RectangleF,Action>> profileActions=new List<KeyValuePair<RectangleF,Action>>();
-  ScoutDetailService details;string detailSignature="";int teamOffset,profileTab,chartMetric,historyFilter;bool currentHeroOnly;long matchSelected;int matchesOffset;float contentTop=58;
+  ScoutDetailService details;string detailSignature="";int teamOffset,profileTab,chartMetric,historyFilter;bool currentHeroOnly,showSources;long matchSelected;int matchesOffset;float contentTop=58;
   Dictionary<long,int> detailHeroes=new Dictionary<long,int>();int detailRepaintQueued;
-  public void OpenProfile(ScoutRow row){if(row==null||row.Account<=0)return;HideTip();if(selected==0)teamOffset=offset;profileActions.Clear();hits.Clear();selected=row.Account;offset=0;profileTab=0;historyFilter=0;currentHeroOnly=false;matchSelected=0;matchesOffset=0;detailHeroes.Clear();detailSignature="";RefreshProfile();Invalidate();}
+  public void OpenProfile(ScoutRow row){if(row==null||row.Account<=0)return;HideTip();if(selected==0)teamOffset=offset;profileActions.Clear();hits.Clear();selected=row.Account;offset=0;profileTab=0;historyFilter=0;currentHeroOnly=false;showSources=false;matchSelected=0;matchesOffset=0;detailHeroes.Clear();detailSignature="";RefreshProfile();Invalidate();}
   void DetailChanged(){
    if(IsDisposed||!IsHandleCreated||System.Threading.Interlocked.Exchange(ref detailRepaintQueued,1)!=0)return;
    try{BeginInvoke((Action)(()=>{System.Threading.Interlocked.Exchange(ref detailRepaintQueued,0);if(!IsDisposed&&Visible&&selected!=0&&details!=null&&!string.IsNullOrEmpty(detailSignature))Invalidate();}));}
@@ -58,7 +58,7 @@ namespace DeadlockOverlay {
     for(int j=0;j<4;j++){int f=j;Button(g,filters[j],new RectangleF(16+j%cols*(fw+8),y+j/cols*48,fw,40),()=>{historyFilter=f;matchSelected=0;offset=0;},historyFilter==j);}y+=((4+cols-1)/cols)*48+4;
     y=DrawMatches(g,h.Where(m=>historyFilter==0||historyFilter==1&&m.Mode==4||historyFilter==2&&m.Mode==1||historyFilter==3&&m.Hero==row.Hero).ToArray(),y,width);
    }
-   else {y=Paragraph(g,T("CURRENT HERO","ТЕКУЩИЙ ГЕРОЙ"),ScoutProfileData.PlayStyle(h.Where(m=>m.Hero==row.Hero).ToArray(),Detail),y,width);y=Paragraph(g,TacticalTitle(row),ScoutProfileData.Tactics(h,row.Hero,Detail,UserTeam.HasValue?(bool?)(row.Team==UserTeam.Value):null),y,width);y=DrawSources(g,p,data,y,width);}
+   else {y=Paragraph(g,T("CURRENT HERO","ТЕКУЩИЙ ГЕРОЙ"),ScoutProfileData.PlayStyle(h.Where(m=>m.Hero==row.Hero).ToArray(),Detail),y,width);y=Paragraph(g,TacticalTitle(row),ScoutProfileData.TacticalBrief(h,row.Hero,Detail,UserTeam.HasValue?(bool?)(row.Team==UserTeam.Value):null),y,width);y=DrawSources(g,p,data,y,width);}
    g.Restore(saved);ScrollRange(y+20,H-(int)contentTop);
   }
   int DrawOverview(Graphics g,ScoutRow row,RowData data,ScoutMatch[] h,int y,float width){
@@ -77,7 +77,7 @@ namespace DeadlockOverlay {
    card(T("Available history","Доступная история"),ScoutProfileData.N(data.History.Length),T("Sample, not career total","Выборка, не вся карьера"),Theme.Ink);
    card(T("Performance","Эффективность"),ScoutProfileData.Missing,T("Calibration required","Нужна калибровка"),Theme.Muted);
    y+=((i+columns-1)/columns)*120+8;y=Paragraph(g,T("PLAY STYLE","СТИЛЬ ИГРЫ"),ScoutProfileData.PlayStyle(h,Detail),y,width);
-   y=Paragraph(g,TacticalTitle(row),ScoutProfileData.Tactics(data.History.Take(20).ToArray(),row.Hero,Detail,UserTeam.HasValue?(bool?)(row.Team==UserTeam.Value):null),y,width);y=DrawSources(g,data.Profile,data,y,width);return y;
+   y=Paragraph(g,TacticalTitle(row),ScoutProfileData.TacticalBrief(data.History.Take(20).ToArray(),row.Hero,Detail,UserTeam.HasValue?(bool?)(row.Team==UserTeam.Value):null),y,width);y=DrawSources(g,data.Profile,data,y,width);return y;
   }
   string[] MetricNames(){return new[]{"KDA",T("Souls","Души"),T("Results","Результаты"),T("Rank","Ранг"),T("Hero damage","Урон героям"),T("Objectives","Строения"),T("Healing","Лечение")};}
   int DrawMatches(Graphics g,ScoutMatch[] h,int y,float width){
@@ -101,7 +101,7 @@ namespace DeadlockOverlay {
    TextAt(g,T("Hover a point for match details","Наведите на точку для подробностей"),11,Theme.Muted,new RectangleF(left,box.Bottom-23,right-left,20));
   }
   int Paragraph(Graphics g,string title,string body,int y,float width){int height;using(var f=new Font("Bahnschrift",14,FontStyle.Regular,GraphicsUnit.Pixel))height=(int)Math.Ceiling(g.MeasureString(body,f,(int)Math.Max(80,width-36)).Height)+65;Theme.Fill(g,Theme.Card,new RectangleF(16,y,width,height),10);TextAt(g,title,13,Theme.Gold,new RectangleF(34,y+14,width-36,23));TextAt(g,body,14,Theme.Ink,new RectangleF(34,y+43,width-36,height-48));return y+height+14;}
-  int DrawSources(Graphics g,ScoutProfile p,RowData data,int y,float width){string date=p.Fetched==DateTime.MinValue?ScoutProfileData.Missing:p.Fetched.ToLocalTime().ToString("g",ScoutProfileData.Culture);string body=T("History updated: ","История обновлена: ")+date+T(". Public normal-mode ranked and unranked matches. Healing includes the source's total; ally healing is separate. ",". Публичные обычные и рейтинговые матчи. Лечение — общий счётчик источника; лечение союзников отдельно. ");body+=T("Rank source: match #","Источник ранга: матч №")+p.RankMatch+" · "+(p.RankFetched==DateTime.MinValue?ScoutProfileData.Missing:p.RankFetched.ToLocalTime().ToString("g",ScoutProfileData.Culture))+". ";foreach(var tag in data.Tags)body+=tag.Label+": "+tag.Reason+". ";PartyInfo party;if(Parties.TryGetValue(p.Account,out party)&&party.Confidence!=PartyConfidence.Unknown)body+=party.Reason;y=Paragraph(g,T("SAMPLE & SOURCES","ВЫБОРКА И ИСТОЧНИКИ"),body,y,width);
+  int DrawSources(Graphics g,ScoutProfile p,RowData data,int y,float width){Button(g,showSources?T("Hide sample & sources","Скрыть выборку и источники"):T("Show sample & sources · public data, inferred parties","Выборка и источники · публичные данные, предполагаемые пати"),new RectangleF(16,y,width,42),()=>showSources=!showSources,showSources);y+=54;if(!showSources)return y;string date=p.Fetched==DateTime.MinValue?ScoutProfileData.Missing:p.Fetched.ToLocalTime().ToString("g",ScoutProfileData.Culture);string body=T("History updated: ","История обновлена: ")+date+T(". Public normal-mode ranked and unranked matches. Healing includes the source's total; ally healing is separate. ",". Публичные обычные и рейтинговые матчи. Лечение — общий счётчик источника; лечение союзников отдельно. ");body+=T("Rank source: match #","Источник ранга: матч №")+p.RankMatch+" · "+(p.RankFetched==DateTime.MinValue?ScoutProfileData.Missing:p.RankFetched.ToLocalTime().ToString("g",ScoutProfileData.Culture))+". ";foreach(var tag in data.Tags)body+=tag.Label+": "+tag.Reason+". ";PartyInfo party;if(Parties.TryGetValue(p.Account,out party)&&party.Confidence!=PartyConfidence.Unknown)body+=party.Reason;y=Paragraph(g,T("SAMPLE & SOURCES","ВЫБОРКА И ИСТОЧНИКИ"),body,y,width);
    foreach(var mate in (p.Mates??new HistoricalMate[0]).OrderByDescending(m=>m.Matches).Take(5)){
     var known=Rows.FirstOrDefault(r=>r.Account==mate.Account);var shared=ScoutStatistics.History(p).Where(m=>mate.MatchIds.Contains(m.Id)).ToArray();
     string name=known==null?"Account "+mate.Account:known.Name;
