@@ -8,6 +8,14 @@ Overlay contains the preview, visibility switches, size and opacity. Drag a pane
 
 While playing, your team is on the left. Spectator mode keeps the standard team sides. Counter-item pictures correspond to enemy heroes. A current lane assignment is preferred when the game exposes it; an unreported lane swap cannot be confirmed.
 
+## Counter Items
+
+Open **Counter Items** from the notification area or Overlay settings. Select Team, Lane, Situational or Auto. Click one or more opponent portraits to choose your lane targets, then use **Clear lane selection** to reset them. When current souls are available, the list distinguishes items you can buy now from later options. Use **Mark purchased** to exclude an item and **Undo selected mark** to restore it.
+
+## Match Review
+
+Open **Compare** in the match summary to see each player's available totals. Open a player for progression graphs and item history. The timeline includes recorded shop events and sales, with filters for weapon, vitality and spirit.
+
 ## Shortcuts
 The global show/hide shortcut is Ctrl+Shift+F8 by default. In Hotkeys you can assign separate Ctrl+Shift+F1–F12 shortcuts to the two teams, recommendations, crystals, Mid Boss and Rift. Duplicate assignments are rejected.
 
@@ -16,6 +24,8 @@ About has optional links for reviews, ideas and bug reports. They open GitHub fo
 
 ## Settings and logs
 For compatibility with existing installations, local settings remain under `%LOCALAPPDATA%\DeadlockOverlay`. Keep this folder when updating if you want to retain your layout. Logs are stored there as `errors.log`. Review any log before choosing to attach it to a report.
+
+About includes an optional live-state log for match transitions, hero and lane changes, and recommendation refreshes.
 
 ## Data availability
 Statistics require current source data. A missing value is not zero. Public broadcasts may not be available immediately. Exact event timers, lane swaps and final reports depend on what the current match source exposes. Closing the game is not proof that a match finished.

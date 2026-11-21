@@ -1,14 +1,14 @@
 ﻿<div align="center">
   <img src="assets/brand/banner.svg" alt="Deadlock Helper by kvintin" width="900" />
   <p>A focused companion for Deadlock: live statistics, player profiles and match review.</p>
-  <p><a href="https://github.com/Alexkvintin/deadlock-helper/releases/tag/v1.1.0-beta.1"><strong>Download v1.1.0 Beta 1</strong></a> · <a href="#getting-started">Getting started</a> · <a href="#feedback--ideas">Feedback & ideas</a></p>
+  <p><a href="https://github.com/Alexkvintin/deadlock-helper/releases/tag/v1.2.0-beta.1"><strong>Download v1.2.0 Beta 1</strong></a> · <a href="#getting-started">Getting started</a> · <a href="#feedback--ideas">Feedback & ideas</a></p>
 </div>
 
-## During your match
+## Live Overlay
 
 - Hero damage, structure damage, healing and unspent souls in separate team panels.
 - Automatic local match detection and manual match-ID connection for available broadcasts.
-- Counter-item suggestions and individual map timers when source data is available.
+- Individual map timers when source data is available.
 - Move and resize panels, adjust opacity, and assign independent visibility shortcuts.
 - English and Russian interfaces, with display scaling and multiple-monitor support.
 
@@ -18,14 +18,23 @@
 - Independent explained tags, including current-hero MAIN and recent win streaks.
 - Player profiles with public avatars, hero artwork, match history and charts.
 - Overall / Current hero views and ranked, unranked and hero history filters.
-- Cautious tactical notes based on recorded current-hero statistics.
+- Tactical Insights for allies and opponents, based on their recorded matches on the current hero. Scout follows confirmed hero changes while retaining player history.
 - Suggested party groups with consistent letters, colors and dashed outlines. These are historical inferences, not confirmed current parties.
 
-## Match review
+## Counter Items
+
+- Choose Team, Lane, Situational or Auto. The recommendations use the current hero and opponent roster and update when confirmed hero changes arrive.
+- Select multiple lane opponents with their portrait buttons. Auto starts with known lane opponents when available, then switches to team counters.
+- See each item's price, reason and target. Use available souls to distinguish options for now from future purchases.
+- Mark owned items manually to suppress repeat suggestions. Undo individual marks at any time.
+- Situational advice describes when an item could help. The relevant condition may be absent in your match.
+
+## Match Review
 
 - Result and duration when known, player statistics, comparative Impact Score, radar and team totals.
 - Recorded economy, damage, objectives and ally-healing snapshots, with exact point tooltips. Partial histories remain visible with an explicit notice when final totals are unavailable.
-- Item icons, recorded item events and valid recorded sale times; upgrade records may be included in the event history.
+- Compare players on K/D/A, hero damage, objective damage, healing, economy and Impact Score.
+- Filter the item timeline by category, see recorded purchases and sales, and review the most common recorded shop categories. The timeline can include upgrade records.
 - Contribution highlights and limited comparisons with suitable earlier cached games.
 
 ![Live-statistics overlay with demo data](docs/images/overlay-preview.png)
@@ -34,8 +43,10 @@
 ![Player history and chart with fictional statistics](docs/images/player-history.png)
 ![Match review with fictional statistics](docs/images/match-review.png)
 
-<details><summary>Progression and item history</summary>
+<details><summary>Counter Items, comparison and history</summary>
 
+![Counter Items with two selected opponents and demo recommendations](docs/images/counter-items-1.2.png)
+![Match Review player comparison with fictional statistics](docs/images/player-comparison-1.2.png)
 ![Recorded-point chart demonstration](docs/images/progression.png)
 ![Item history demonstration](docs/images/items.png)
 
@@ -47,13 +58,16 @@
 
 - Match history, avatars and detailed reports depend on public data availability. Private/bot games may have no public record.
 - Party groups are inferred. LOW/HIGH skill ratings are not enabled.
-- Sparse graphs show recorded snapshots only. Purchase history is not presented as a verified final inventory.
+- The full lifecycle was verified in a Standard/Unranked match. Ranked-specific behavior still needs live validation.
+- Automatic lane recommendations require confirmed lane data. Use the manual opponent picker when the source lacks it.
+- Graphs show recorded snapshots. Incomplete metadata can leave gaps in item history and cannot establish final inventory.
+- Local and public final objective damage can differ between source snapshots.
 - Some tactical conclusions and historical comparisons remain unavailable with small or incomplete samples.
 - Game portraits, item icons and profile artwork are retrieved into the local cache when available; a first online load may show placeholders. The ZIP does not bundle game artwork without verified redistribution permission.
 
 ## Getting started
 
-1. Download **DeadlockHelper-v1.1.0-beta.1-win-x64.zip** from [this release](https://github.com/Alexkvintin/deadlock-helper/releases/tag/v1.1.0-beta.1).
+1. Download **DeadlockHelper-v1.2.0-beta.1-win-x64.zip** from [this release](https://github.com/Alexkvintin/deadlock-helper/releases/tag/v1.2.0-beta.1).
 2. Extract the entire archive into one folder.
 3. Run **DeadlockHelper.exe**.
 4. Launch Deadlock and configure **Overlay**, **Scout** and **Hotkeys**.
@@ -82,7 +96,7 @@ Public broadcasts depend on upstream availability and request limits. Some map-e
 
 ## Build
 
-Run `build.ps1` on Windows with .NET Framework 4.8 to compile the desktop application. Build the local reader with `scripts/build-local-reader.ps1`; this requires Rust and a Windows C++ toolchain. The reader dependency is pinned in `native-reader/Cargo.lock`. `scripts/package.ps1` creates the portable release.
+Run `build.ps1` on Windows with .NET Framework 4.8 to compile the desktop application. `scripts/package.ps1` builds the pinned Companion Reader with Rust and a Windows C++ toolchain, then builds and packages the app in a clean staging folder. To package with a verified matching reader and its notices already built, use `scripts/package.ps1 -UseBuiltReader -ReaderDirectory <directory>`.
 
 ## License and author
 

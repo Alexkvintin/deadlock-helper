@@ -56,3 +56,9 @@ Worktree: `G:/OwerLock/artifacts/review-data-integrity`. Latest local executable
 See [LIVE-VALIDATION-1.2.1.md](LIVE-VALIDATION-1.2.1.md). Local implementation complete for opt-in diagnostic events, multi-opponent lane selection and reversible marks, counter priority/affordability, efficient hero-decoration reuse, succinct tactical profiles, filtered item history and visual player comparison. 71 integrated local checks and related regressions passed. User-supplied spectator match 140709031 delivered 12 player rows and two distinct ticks in ~3.5 seconds; original assignments were available, confirmed actual lanes were not. Local Ranked pregame/hero and lane swaps, real match completion, physical per-monitor DPI and gameplay frame-time remain unverified. Authoritative equipped inventory remains unavailable.
 
 Current local package: `dist/live-validation-1.2.1/DeadlockHelper.exe` (`1.2.1-dev`). Preserve prior packages. Next priority: manual Ranked lifecycle and gameplay latency evidence, then address only reproducible issues. No new release or push.
+
+### v1.2.0 Beta 1
+
+The beta is built from the live-tested 1.2.1-dev code. Full lifecycle validation covered Standard/Unranked, including automatic report display. Comparing three local summaries with the corresponding public results matched objective damage for 35 of 36 players. For the single differing row, the public final sample was one second later than the local capture. The cause remains unverified. Live Ranked hero swaps, confirmed lanes, final inventory, and FPS/1% lows are still open.
+
+See [release notes](RELEASE-v1.2.0-beta.1.md) and the [GitHub release](https://github.com/Alexkvintin/deadlock-helper/releases/tag/v1.2.0-beta.1).
